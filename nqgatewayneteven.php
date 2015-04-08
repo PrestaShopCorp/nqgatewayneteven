@@ -1,6 +1,6 @@
 <?php
-/*
-* 2007-2014 PrestaShop
+/**
+* 2007-2015 PrestaShop
 *
 * NOTICE OF LICENSE
 *
@@ -18,9 +18,9 @@
 * versions in the future. If you wish to customize PrestaShop for your
 * needs please refer to http://www.prestashop.com for more information.
 *
-*  @author PrestaShop SA <contact@prestashop.com>
-*  @copyright  2007-2014 PrestaShop SA
-*  @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+*  @author    PrestaShop SA <contact@prestashop.com>
+*  @copyright 2007-2015 PrestaShop SA
+*  @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
 *  International Registered Trademark & Property of PrestaShop SA
 */
 
@@ -46,7 +46,7 @@ class NqGatewayNeteven extends Module
 
 		$this->tab = $tab_name;
 
-		$this->version = '2.11.0';
+		$this->version = '3.0.0';
 		$this->author = 'NetEven';
 
 		parent::__construct();
@@ -54,10 +54,12 @@ class NqGatewayNeteven extends Module
 		$this->displayName = $this->l('NetEven');
 		$this->description = $this->l('Vendez sur toutes les marketplaces depuis votre PrestaShop');
 
+		$this->use_ajax_cron = true;
 
 		$this->feature_url = '/script/set-neteven-categories.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME'));
-		$this->order_url = '/script/import-order.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME')).'&active=1';
-		$this->product_url = '/script/update-product.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME')).'&active=1';
+		$this->order_url = '/script/'.($this->use_ajax_cron ? 'ajax-' : '').'import-order.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME')).'&active=1';
+		$this->product_url = '/script/'.($this->use_ajax_cron ? 'ajax-' : '').'update-product.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME')).'&active=1';
+		$this->stock_url = '/script/'.($this->use_ajax_cron ? 'ajax-' : '').'update-stock.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME')).'&active=1';
 
 		if (!$this->getSOAP())
 			$this->warning = $this->l('SOAP should be installed for this module');
@@ -73,14 +75,12 @@ class NqGatewayNeteven extends Module
 		}
 	}
 
+
 	public function install()
 	{
-		if (!parent::install() ||
-			!$this->registerHook('updateOrderStatus') ||
-			!$this->registerHook('updateCarrier') ||
-			!$this->installDB() ||
-			!$this->installConfig())
+		if (!parent::install() || !$this->registerHook('updateOrderStatus') || !$this->registerHook('updateCarrier') || !$this->installDB() || !$this->installConfig())
 			return false;
+
 		return true;
 	}
 
@@ -100,7 +100,7 @@ class NqGatewayNeteven extends Module
 
 	public function installConfig()
 	{
-		$rand_letters = range('a','z');
+		$rand_letters = range('a', 'z');
 		shuffle($rand_letters);
 
 		// Creation of employee NetEven
@@ -118,7 +118,7 @@ class NqGatewayNeteven extends Module
 
 		// Creation of customer Neteven
 		$new_customer = new Customer();
-		$new_customer->lastname	= 'Client';
+		$new_customer->lastname = 'Client';
 		$new_customer->firstname = 'NetEven';
 		$new_customer->passwd = $rand_letters[0].'$&-$&-$&-$&'.rand(0, 1000);
 		$new_customer->email = 'cust'.rand(0, 100).$rand_letters[0].rand(0, 100).'@neteven.com';
@@ -129,7 +129,7 @@ class NqGatewayNeteven extends Module
 
 		// Creation of order status Neteven
 		$order_state = new OrderState();
-		$order_state->name = array();
+		$order_state->name = array ();
 		foreach (Language::getLanguages() as $language)
 			$order_state->name[(int)$language['id_lang']] = $this->l('Statut NetEven');
 
@@ -141,7 +141,7 @@ class NqGatewayNeteven extends Module
 		$order_state->invoice = false;
 		if ($order_state->add())
 		{
-			$source = dirname(__FILE__).'/img/os.gif';
+			$source = dirname(__FILE__).'/views/img/os.gif';
 			$destination = dirname(__FILE__).'/../../img/os/'.(int)$order_state->id.'.gif';
 			copy($source, $destination);
 		}
@@ -163,14 +163,17 @@ class NqGatewayNeteven extends Module
 		Gateway::updateConfig('SHIPPING_BY_PRODUCT_FIELDNAME', 'additional_shipping_cost');
 		Gateway::updateConfig('IMAGE_TYPE_NAME', '');
 
+		Gateway::updateConfig('SYNCHRO_PRODUCT_CHANGE_ACTIVE', 0);
+		Gateway::updateConfig('SYNCHRO_PRODUCT_CHANGE_OOS', 0);
+
 		$this->installCarrier();
 
 		return true;
 	}
 
 
-	private function installCarrier(){
-
+	private function installCarrier()
+	{
 		$id_carrier_neteven = Gateway::getConfig('CARRIER_NETEVEN');
 		if (!empty($id_carrier_neteven))
 			return;
@@ -179,7 +182,8 @@ class NqGatewayNeteven extends Module
 		Gateway::updateConfig('CARRIER_NETEVEN', $id_carrier);
 	}
 
-	private function installHookByVersion(){
+	private function installHookByVersion()
+	{
 		if ($this->version < 2)
 			return;
 
@@ -199,7 +203,7 @@ class NqGatewayNeteven extends Module
 
 		if (($carrier = new Carrier()))
 		{
-			$delay_lang = array();
+			$delay_lang = array ();
 			foreach (Language::getLanguages(false) as $lang)
 				$delay_lang[$lang['id_lang']] = $delay;
 			$carrier->name = $name;
@@ -213,6 +217,7 @@ class NqGatewayNeteven extends Module
 
 			$ret = $carrier->add();
 		}
+
 		return $ret ? $carrier->id : false;
 	}
 
@@ -220,7 +225,7 @@ class NqGatewayNeteven extends Module
 	{
 		// Creation of the tables in a database
 		$result = true;
-		$queries = array();
+		$queries = array ();
 
 		$queries[] = 'CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'orders_gateway_order_state` (
 			`id_order_gateway_order_state` INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -258,20 +263,9 @@ class NqGatewayNeteven extends Module
 			KEY `name` (`name`)
 		) ENGINE='._MYSQL_ENGINE_.' DEFAULT CHARSET=utf8;';
 
-		$queries[] = 'CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'orders_gateway_feature_link` (
-			`id_order_gateway_feature_link` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-			`id_order_gateway_feature` INT UNSIGNED NOT NULL,
-			`id_feature` INT UNSIGNED,
-			`id_attribute_group` INT UNSIGNED,
-			PRIMARY KEY (`id_order_gateway_feature_link`)
-		) ENGINE='._MYSQL_ENGINE_.' DEFAULT CHARSET=utf8;';
-
-		$queries[] = 'CREATE TABLE IF NOT EXISTS `'._DB_PREFIX_.'orders_gateway_feature` (
-			`id_order_gateway_feature` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-			`name` VARCHAR(255),
-			`value` VARCHAR(255),
-			`category` VARCHAR(255),
-			PRIMARY KEY (`id_order_gateway_feature`)
+		$queries[] = 'CREATE TABLE IF NOT EXISTS  `'._DB_PREFIX_.'orders_gateway_inactive_product` (
+			  `id_product` int(11) NOT NULL,
+			  PRIMARY KEY (`id_product`)
 		) ENGINE='._MYSQL_ENGINE_.' DEFAULT CHARSET=utf8;';
 
 		foreach ($queries as $query)
@@ -279,9 +273,6 @@ class NqGatewayNeteven extends Module
 
 		if (!$result)
 			return false;
-
-		// Update table `orders_gateway_feature`
-		ToolBox::setNetEvenCategories();
 
 		return true;
 	}
@@ -309,10 +300,12 @@ class NqGatewayNeteven extends Module
 
 		if (!$result)
 			return false;
+
 		return true;
 	}
 
-	public function unInstallHookByVersion(){
+	public function unInstallHookByVersion()
+	{
 		if ($this->version < 2)
 			return;
 
@@ -330,7 +323,7 @@ class NqGatewayNeteven extends Module
 
 	public function hookUpdateCarrier($params)
 	{
-		if ((int)($params['id_carrier']) != (int)($params['carrier']->id))
+		if ((int)$params['id_carrier'] != (int)$params['carrier']->id)
 		{
 			$id_carrier_neteven = Gateway::getConfig('CARRIER_NETEVEN');
 			if ($params['id_carrier'] != $id_carrier_neteven)
@@ -342,6 +335,9 @@ class NqGatewayNeteven extends Module
 
 	public function hookUpdateOrderStatus($params)
 	{
+		if (!Db::getInstance()->getRow('SELECT * FROM `'._DB_PREFIX_.'orders_gateway` WHERE `id_order` = '.(int)$params['id_order']))
+			return;
+
 		// If SOAP is not installed
 		if (!$this->getSOAP())
 			return;
@@ -353,39 +349,171 @@ class NqGatewayNeteven extends Module
 		GatewayOrder::getInstance()->setOrderNetEven($params);
 	}
 
+	public function hookUpdateProduct($params)
+	{
+		if (Gateway::getConfig('SYNCHRO_PRODUCT_ONLY_ACTIVE') && (int)$params['product']->active <= 0)
+			Gateway::addInactiveProduct((int)$params['product']->id);
+	}
+
 
 	public function getSOAP()
 	{
 		if (!class_exists('SoapClient'))
 			return false;
+
 		return true;
+	}
+
+	private function checkNewVersionData()
+	{
+		$check = Db::getInstance()->ExecuteS('SHOW TABLES LIKE "'._DB_PREFIX_.'orders_gateway_inactive_product"');
+		if (empty($check))
+			Db::getInstance()->ExecuteS('CREATE TABLE IF NOT EXISTS  `'._DB_PREFIX_.'orders_gateway_inactive_product` (
+			  `id_product` int(11) NOT NULL,
+			  PRIMARY KEY (`id_product`)
+			) ENGINE='._MYSQL_ENGINE_.' DEFAULT CHARSET=utf8;');
 	}
 
 	public function getContent()
 	{
+		$this->checkNewVersionData();
+
 		$this->html = '';
 
-		if (Tools::isSubmit('submitNetEven'))
+		if (Tools::isSubmit('submitNetEvenConnexion'))
 		{
-			if (Tools::getValue('NETEVEN_LOGIN')&& Tools::getValue('NETEVEN_PASSWORD'))
+			if (Tools::getValue('NETEVEN_LOGIN') && Tools::getValue('NETEVEN_PASSWORD'))
 			{
 				Gateway::updateConfig('NETEVEN_LOGIN', Tools::getValue('NETEVEN_LOGIN'));
 				Gateway::updateConfig('NETEVEN_PASSWORD', Tools::getValue('NETEVEN_PASSWORD'));
-				Gateway::updateConfig('COMMENT', Tools::getValue('COMMENT'));
-				Gateway::updateConfig('DEFAULT_BRAND', Tools::getValue('DEFAULT_BRAND'));
-				Gateway::updateConfig('IMAGE_TYPE_NAME', Tools::getValue('IMAGE_TYPE_NAME'));
-				Gateway::updateConfig('SYNCHRONISATION_ORDER', (int)Tools::getValue('SYNCHRONISATION_ORDER'));
-				Gateway::updateConfig('SYNCHRONISATION_PRODUCT', (int)Tools::getValue('SYNCHRONISATION_PRODUCT'));
-				Gateway::updateConfig('TYPE_SKU', (string)Tools::getValue('TYPE_SKU'));
-
 				$this->html .= $this->displayConfirmation($this->l('Les paramètres ont bien été mis à jour'));
 			}
 			else
 				$this->html .= $this->displayError($this->l('Les login et mot de passe NetEven sont obligatoire'));
 
 		}
+		elseif (Tools::isSubmit('submitSynchroProduct') || Tools::isSubmit('submitSynchroStock'))
+		{
+
+			if (Tools::isSubmit('submitSynchroProduct'))
+			{
+				// Specific save for active product mode //
+				$old_value = (int)Gateway::getConfig('SYNCHRO_PRODUCT_ONLY_ACTIVE');
+				$new_value_active = (int)Tools::getValue('SYNCHRO_PRODUCT_ONLY_ACTIVE');
+				if ($new_value_active == 1 && $new_value_active != $old_value)
+					Gateway::updateConfig('SYNCHRO_PRODUCT_CHANGE_ACTIVE', 1);
+
+				$old_value = (int)Gateway::getConfig('SYNCHRO_PRODUCT_OOS');
+				$new_value = (int)Tools::getValue('SYNCHRO_PRODUCT_OOS');
+				if ($new_value == 0 && $new_value != $old_value)
+					Gateway::updateConfig('SYNCHRO_PRODUCT_CHANGE_OOS', 1);
+
+				Gateway::updateConfig('SYNCHRO_PRODUCT_OOS', (int)Tools::getValue('SYNCHRO_PRODUCT_OOS'));
+
+				Gateway::updateConfig('SYNCHRONISATION_PRODUCT', (int)Tools::getValue('SYNCHRONISATION_PRODUCT'));
+				Gateway::updateConfig('SYNCHRO_PRODUCT_PARENT', (int)Tools::getValue('SYNCHRO_PRODUCT_PARENT'));
+
+				Gateway::updateConfig('DEFAULT_BRAND', Tools::getValue('DEFAULT_BRAND'));
+				Gateway::updateConfig('IMAGE_TYPE_NAME', Tools::getValue('IMAGE_TYPE_NAME'));
+				Gateway::updateConfig('TYPE_SKU', (string)Tools::getValue('TYPE_SKU'));
+
+				// Save Others fields to send //
+				$SYNCHRO_PRODUCT_OTHER_FIELDS = Tools::getValue('SYNCHRO_PRODUCT_OTHER_FIELDS');
+				$t_fields = array ();
+				if (!empty($SYNCHRO_PRODUCT_OTHER_FIELDS))
+				{
+					foreach ($SYNCHRO_PRODUCT_OTHER_FIELDS as $field)
+					{
+						list($type, $value) = explode('¤', $field);
+
+						if (!isset($t_fields[$type]))
+							$t_fields[$type] = $value;
+						else
+							$t_fields[$type] .= '¤'.$value;
+					}
+					Gateway::updateConfig('SYNCHRO_PRODUCT_OTHER_FIELDS_P', !empty($t_fields['P']) ? $t_fields['P'] : '');
+					Gateway::updateConfig('SYNCHRO_PRODUCT_OTHER_FIELDS_PL', !empty($t_fields['PL']) ? $t_fields['PL'] : '');
+					Gateway::updateConfig('SYNCHRO_PRODUCT_OTHER_FIELDS_F', !empty($t_fields['F']) ? $t_fields['F'] : '');
+					Gateway::updateConfig('SYNCHRO_PRODUCT_OTHER_FIELDS_A', !empty($t_fields['A']) ? $t_fields['A'] : '');
+				}
+
+				// Save Match information between NetEven and Prestashop product field //
+				$match_tab = Tools::getValue('SYNCHRO_PRODUCT_MATCH');
+				foreach ($match_tab as $name => $value)
+					Gateway::updateConfig('SYNCHRO_PRODUCT_MATCH_'.$name, $value);
+
+				// Save Address information for price calculation //
+				$match_country_tab = Tools::getValue('SYNCHRO_PRODUCT_MATCH_COUNTRY');
+				foreach ($match_country_tab as $name => $value)
+				{
+					Gateway::updateConfig('SYNCHRO_PRODUCT_MATCH_COUNTRY_'.$name, $value);
+					$this->createAddress($value);
+				}
+
+				// Save match languages informations //
+				Gateway::updateConfig('SYNCHRO_PRODUCT_LANG_FR', Tools::getValue('SYNCHRO_PRODUCT_LANG_FR'));
+				Gateway::updateConfig('SYNCHRO_PRODUCT_LANG_EN', Tools::getValue('SYNCHRO_PRODUCT_LANG_EN'));
+				Gateway::updateConfig('SYNCHRO_PRODUCT_LANG_DE', Tools::getValue('SYNCHRO_PRODUCT_LANG_DE'));
+				Gateway::updateConfig('SYNCHRO_PRODUCT_LANG_ES', Tools::getValue('SYNCHRO_PRODUCT_LANG_ES'));
+				Gateway::updateConfig('SYNCHRO_PRODUCT_LANG_IT', Tools::getValue('SYNCHRO_PRODUCT_LANG_IT'));
+
+				Gateway::updateConfig('SYNCHRO_PRODUCT_LANG_ACTIVE_FR', Tools::getValue('SYNCHRO_PRODUCT_LANG_ACTIVE_FR'));
+				Gateway::updateConfig('SYNCHRO_PRODUCT_LANG_ACTIVE_EN', Tools::getValue('SYNCHRO_PRODUCT_LANG_ACTIVE_EN'));
+				Gateway::updateConfig('SYNCHRO_PRODUCT_LANG_ACTIVE_DE', Tools::getValue('SYNCHRO_PRODUCT_LANG_ACTIVE_DE'));
+				Gateway::updateConfig('SYNCHRO_PRODUCT_LANG_ACTIVE_ES', Tools::getValue('SYNCHRO_PRODUCT_LANG_ACTIVE_ES'));
+				Gateway::updateConfig('SYNCHRO_PRODUCT_LANG_ACTIVE_IT', Tools::getValue('SYNCHRO_PRODUCT_LANG_ACTIVE_IT'));
+
+				$this->html .= $this->displayConfirmation($this->l('Les paramètres de la synchronisation d\inventaire ont bien été mis à jour'));
+			}
+			elseif (Tools::isSubmit('submitSynchroStock'))
+			{
+				// Specific save for active product mode //
+				$old_value = (int)Gateway::getConfig('SYNCHRO_STOCK_ONLY_ACTIVE');
+				$new_value_active = (int)Tools::getValue('SYNCHRO_STOCK_ONLY_ACTIVE');
+				if ($new_value_active == 0 && $new_value_active != $old_value)
+					Gateway::updateConfig('SYNCHRO_PRODUCT_CHANGE_ACTIVE', 1);
+
+				Gateway::updateConfig('SYNCHRONISATION_STOCK', (int)Tools::getValue('SYNCHRONISATION_STOCK'));
+
+				$this->html .= $this->displayConfirmation($this->l('Les paramètres de la synchronisation de stock ont bien été mis à jour'));
+			}
+
+			Gateway::updateConfig('SYNCHRO_PRODUCT_ONLY_ACTIVE', $new_value_active);
+			Gateway::updateConfig('SYNCHRO_STOCK_ONLY_ACTIVE', $new_value_active);
+		}
+		elseif (Tools::isSubmit('submitNetEven'))
+		{
+			Gateway::updateConfig('SYNCHRONISATION_ORDER', (int)Tools::getValue('SYNCHRONISATION_ORDER'));
+
+			$this->html .= $this->displayConfirmation($this->l('Les paramètres ont bien été mis à jour'));
+
+		}
+		elseif (Tools::getValue('submitMappingPrestaNeteven'))
+		{
+			$t_order_state = OrderState::getOrderStates(Configuration::get('PS_LANG_DEFAULT'));
+			foreach ($t_order_state as $state)
+				Gateway::updateConfig('MAPPING_STATE_'.$state['id_order_state'], Tools::getValue('MAPPING_STATE_'.$state['id_order_state']));
+
+			$this->html .= $this->displayConfirmation($this->l('Les paramètres ont bien été mis à jour'));
+		}
+		elseif (Tools::getValue('submitMappingNetevenPresta'))
+		{
+			$t_neteven_state = Gateway::getNetevenState();
+			foreach ($t_neteven_state as $state)
+				Gateway::updateConfig('MAPPING_STATE_'.$state['index'], Tools::getValue('MAPPING_STATE_'.$state['index']));
+
+			$this->html .= $this->displayConfirmation($this->l('Les paramètres ont bien été mis à jour'));
+		}
 		elseif (Tools::isSubmit('submitNetEvenShipping'))
 		{
+			$languages = LanguageCore::getLanguages();
+			foreach ($languages as $language)
+				Gateway::updateConfig('COMMENT_LANG_'.$language['id_lang'], Tools::getValue('COMMENT_LANG_'.$language['id_lang']));
+
+			Gateway::updateConfig('COMMENT', Tools::getValue('COMMENT'));
+
+			Gateway::updateConfig('ACTIVE_SHIPPING', Tools::getValue('ACTIVE_SHIPPING'));
+
 			Gateway::updateConfig('SHIPPING_DELAY', Tools::getValue('SHIPPING_DELAY'));
 			Gateway::updateConfig('SHIPPING_PRICE_LOCAL', Tools::getValue('SHIPPING_PRICE_LOCAL'));
 			Gateway::updateConfig('SHIPPING_PRICE_INTERNATIONAL', Tools::getValue('SHIPPING_PRICE_INTERNATIONAL'));
@@ -397,15 +525,15 @@ class NqGatewayNeteven extends Module
 			Gateway::updateConfig('SHIPPING_CARRIER_INTERNATIONAL', Tools::getValue('SHIPPING_CARRIER_INTERNATIONAL'));
 			Gateway::updateConfig('SHIPPING_ZONE_INTERNATIONAL', Tools::getValue('SHIPPING_ZONE_INTERNATIONAL'));
 
-
 			$this->html .= $this->displayConfirmation($this->l('Les paramètres de livraison ont bien été mis à jour'));
 		}
 		elseif (Tools::isSubmit('submitDev'))
 		{
-			Gateway::updateConfig('NETEVEN_URL', Tools::getValue('NETEVEN_URL'));
-			Gateway::updateConfig('NETEVEN_NS', Tools::getValue('NETEVEN_NS'));
+			//Gateway::updateConfig('NETEVEN_URL', Tools::getValue('NETEVEN_URL'));
+			//Gateway::updateConfig('NETEVEN_NS', Tools::getValue('NETEVEN_NS'));
 			Gateway::updateConfig('MAIL_LIST_ALERT', Tools::getValue('MAIL_LIST_ALERT'));
 			Gateway::updateConfig('DEBUG', (int)Tools::getValue('DEBUG'));
+			Gateway::updateConfig('SAND_BOX', (int)Tools::getValue('SAND_BOX'));
 			Gateway::updateConfig('SEND_REQUEST_BY_EMAIL', (int)Tools::getValue('SEND_REQUEST_BY_EMAIL'));
 
 			$this->html .= $this->displayConfirmation($this->l('Les paramètres de maintenance ont bien été mis à jour'));
@@ -440,11 +568,11 @@ class NqGatewayNeteven extends Module
 		$attribute_groups = AttributeGroup::getAttributesGroups((int)$this->context->cookie->id_lang);
 
 		$neteven_features = Db::getInstance()->ExecuteS('SELECT * FROM `'._DB_PREFIX_.'orders_gateway_feature`');
-		$neteven_feature_categories = array();
+		$neteven_feature_categories = array ();
 		foreach ($neteven_features as $neteven_feature)
 		{
 			if (!isset($neteven_feature_categories[$neteven_feature['category']]))
-				$neteven_feature_categories[$neteven_feature['category']] = array();
+				$neteven_feature_categories[$neteven_feature['category']] = array ();
 
 			$neteven_feature_categories[$neteven_feature['category']][] = $neteven_feature;
 		}
@@ -459,14 +587,45 @@ class NqGatewayNeteven extends Module
 
 	public function displayForm($order_states, $features, $attribute_groups, $neteven_feature_categories)
 	{
-		$customizable_fields = array();
+		$customizable_fields = array ();
 		if (Gateway::getConfig('CUSTOMIZABLE_FIELDS'))
 			foreach (explode('¤', Gateway::getConfig('CUSTOMIZABLE_FIELDS')) as $customizable_field)
 				$customizable_fields[] = explode('|', $customizable_field);
 
 		$carriers = Carrier::getCarriers((int)$this->context->cookie->id_lang);
 
-		$this->context->smarty->assign(array(
+		$countries = CountryCore::getCountries((int)$this->context->cookie->id_lang);
+
+		// Récupération des config pour la synchro produit.
+		list($t_values, $t_fields) = Gateway::getFieldsMatchTab();
+		$t_match_fields = array ();
+		foreach ($t_fields as $name => $value)
+			$t_match_fields[$name] = Gateway::getConfig('SYNCHRO_PRODUCT_MATCH_'.$name);
+		$t_match_country_fields = array ();
+		foreach ($t_fields as $name => $value)
+			$t_match_country_fields[$name] = Gateway::getConfig('SYNCHRO_PRODUCT_MATCH_COUNTRY_'.$name);
+
+		// Récupération des config pour la la synchro de langue.
+		$t_languages = Gateway::getNetevenLanguages();
+		$t_match_lang = array ();
+		foreach ($t_languages as $row)
+		{
+			$t_match_lang['SYNCHRO_PRODUCT_LANG_'.$row['code']] = (int)Gateway::getConfig('SYNCHRO_PRODUCT_LANG_'.$row['code']);
+			$t_match_lang['SYNCHRO_PRODUCT_LANG_ACTIVE_'.$row['code']] = (int)Gateway::getConfig('SYNCHRO_PRODUCT_LANG_ACTIVE_'.$row['code']);
+		}
+
+		//Récupération de la cofnig pour le mapping de state Presta -> Neteven.
+		$t_order_state = OrderState::getOrderStates(Configuration::get('PS_LANG_DEFAULT'));
+		foreach ($t_order_state as &$order_state)
+			$order_state['neteven_state'] = Gateway::getConfig('MAPPING_STATE_'.$order_state['id_order_state']);
+
+		// récuparation des comment multilang
+		$languages = LanguageCore::getLanguages();
+		$t_comment_lang = array ();
+		foreach ($languages as $language)
+			$t_comment_lang[$language['id_lang']] = Gateway::getConfig('COMMENT_LANG_'.$language['id_lang']);
+
+		$this->context->smarty->assign(array (
 			'SHIPPING_CARRIER_FRANCE' => Tools::safeOutput(Tools::getValue('SHIPPING_CARRIER_FRANCE', Gateway::getConfig('SHIPPING_CARRIER_FRANCE'))),
 			'SHIPPING_ZONE_FRANCE' => Tools::safeOutput(Tools::getValue('SHIPPING_ZONE_FRANCE', Gateway::getConfig('SHIPPING_ZONE_FRANCE'))),
 			'SHIPPING_CARRIER_INTERNATIONAL' => Tools::safeOutput(Tools::getValue('SHIPPING_CARRIER_INTERNATIONAL', Gateway::getConfig('SHIPPING_CARRIER_INTERNATIONAL'))),
@@ -480,19 +639,11 @@ class NqGatewayNeteven extends Module
 			'neteven_feature_categories' => $neteven_feature_categories,
 			'default_currency' => new Currency((int)Configuration::get('PS_CURRENCY_DEFAULT')),
 			'format_images' => ImageType::getImagesTypes('products'),
-			'cron_feature_url' => Tools::getProtocol(Tools::usingSecureMode()).$_SERVER['HTTP_HOST'].__PS_BASE_URI__.'modules/'.$this->name.$this->feature_url,
-			'cron_order_url' => Tools::getProtocol(Tools::usingSecureMode()).$_SERVER['HTTP_HOST'].__PS_BASE_URI__.'modules/'.$this->name.$this->order_url,
-			'cron_product_url' => Tools::getProtocol(Tools::usingSecureMode()).$_SERVER['HTTP_HOST'].__PS_BASE_URI__.'modules/'.$this->name.$this->product_url,
 			'customizable_fields' => $customizable_fields,
 			'neteven_token' => Tools::encrypt(Configuration::get('PS_SHOP_NAME')),
-			'NETEVEN_LOGIN' => Tools::safeOutput(Tools::getValue('NETEVEN_LOGIN', Gateway::getConfig('NETEVEN_LOGIN'))),
-			'NETEVEN_PASSWORD' => Tools::safeOutput(Tools::getValue('NETEVEN_PASSWORD', Gateway::getConfig('NETEVEN_PASSWORD'))),
-			'SYNCHRONISATION_ORDER' => (int)Gateway::getConfig('SYNCHRONISATION_ORDER'),
-			'SYNCHRONISATION_PRODUCT' => (int)Gateway::getConfig('SYNCHRONISATION_PRODUCT'),
-			'DEFAULT_BRAND' => Tools::safeOutput(Tools::getValue('DEFAULT_BRAND', Gateway::getConfig('DEFAULT_BRAND'))),
 			'SHIPPING_DELAY' => Tools::safeOutput(Tools::getValue('SHIPPING_DELAY', Gateway::getConfig('SHIPPING_DELAY'))),
-			'IMAGE_TYPE_NAME' => Gateway::getConfig('IMAGE_TYPE_NAME'),
 			'COMMENT' => Tools::safeOutput(Tools::getValue('COMMENT', Gateway::getConfig('COMMENT'))),
+			'COMMENT_LANG' => $t_comment_lang,
 			'SHIPPING_PRICE_LOCAL' => Tools::safeOutput(Tools::getValue('SHIPPING_PRICE_LOCAL', Gateway::getConfig('SHIPPING_PRICE_LOCAL'))),
 			'SHIPPING_PRICE_INTERNATIONAL' => Tools::safeOutput(Tools::getValue('SHIPPING_PRICE_INTERNATIONAL', Gateway::getConfig('SHIPPING_PRICE_INTERNATIONAL'))),
 			'SHIPPING_BY_PRODUCT' => (int)Gateway::getConfig('SHIPPING_BY_PRODUCT'),
@@ -500,10 +651,62 @@ class NqGatewayNeteven extends Module
 			'ID_ORDER_STATE_NETEVEN' => (int)Gateway::getConfig('ID_ORDER_STATE_NETEVEN'),
 			'NETEVEN_URL' => Tools::safeOutput(Tools::getValue('NETEVEN_URL', Gateway::getConfig('NETEVEN_URL'))),
 			'NETEVEN_NS' => Tools::safeOutput(Tools::getValue('NETEVEN_NS', Gateway::getConfig('NETEVEN_NS'))),
+			//------------------------------
+			//- Cron URL
+			'cron_feature_url' => Tools::getProtocol(Tools::usingSecureMode()).$_SERVER['HTTP_HOST'].__PS_BASE_URI__.'modules/'.$this->name.$this->feature_url,
+			'cron_order_url' => Tools::getProtocol(Tools::usingSecureMode()).$_SERVER['HTTP_HOST'].__PS_BASE_URI__.'modules/'.$this->name.$this->order_url,
+			'cron_product_url' => Tools::getProtocol(Tools::usingSecureMode()).$_SERVER['HTTP_HOST'].__PS_BASE_URI__.'modules/'.$this->name.$this->product_url,
+			'cron_stock_url' => Tools::getProtocol(Tools::usingSecureMode()).$_SERVER['HTTP_HOST'].__PS_BASE_URI__.'modules/'.$this->name.$this->stock_url,
+			//------------------------------
+			//- Connexion compte
+			'NETEVEN_LOGIN' => Tools::safeOutput(Tools::getValue('NETEVEN_LOGIN', Gateway::getConfig('NETEVEN_LOGIN'))),
+			'NETEVEN_PASSWORD' => Tools::safeOutput(Tools::getValue('NETEVEN_PASSWORD', Gateway::getConfig('NETEVEN_PASSWORD'))),
+			//------------------------------
+			//- Synchro produit
+			'SYNCHRONISATION_PRODUCT' => (int)Gateway::getConfig('SYNCHRONISATION_PRODUCT'),
+			'SYNCHRO_PRODUCT_ONLY_ACTIVE' => (int)Gateway::getConfig('SYNCHRO_PRODUCT_ONLY_ACTIVE'),
+			'SYNCHRO_PRODUCT_OOS' => (int)Gateway::getConfig('SYNCHRO_PRODUCT_OOS'),
+			'SYNCHRO_PRODUCT_PARENT' => (int)Gateway::getConfig('SYNCHRO_PRODUCT_PARENT'),
+			'DEFAULT_BRAND' => Tools::safeOutput(Tools::getValue('DEFAULT_BRAND', Gateway::getConfig('DEFAULT_BRAND'))),
+			'IMAGE_TYPE_NAME' => Gateway::getConfig('IMAGE_TYPE_NAME'),
+			'TYPE_SKU' => (int)(Gateway::getConfig('TYPE_SKU') !== false) ? Gateway::getConfig('TYPE_SKU') : 'reference',
+			'SYNCHRO_PRODUCT_MATCH' => $t_match_fields,
+			'SYNCHRO_PRODUCT_MATCH_COUNTRY' => $t_match_country_fields,
+			'countries' => $countries,
+			'SYNCHRO_PRODUCT_LANG' => $t_match_lang,
+			'SYNCHRO_PRODUCT_OTHER_FIELDS' => Gateway::getOthersProductFields(),
+			'SYNCHRO_PRODUCT_OTHER_FIELDS_P' => explode('¤', Gateway::getConfig('SYNCHRO_PRODUCT_OTHER_FIELDS_P')),
+			'SYNCHRO_PRODUCT_OTHER_FIELDS_PL' => explode('¤', Gateway::getConfig('SYNCHRO_PRODUCT_OTHER_FIELDS_PL')),
+			'SYNCHRO_PRODUCT_OTHER_FIELDS_F' => explode('¤', Gateway::getConfig('SYNCHRO_PRODUCT_OTHER_FIELDS_F')),
+			'SYNCHRO_PRODUCT_OTHER_FIELDS_A' => explode('¤', Gateway::getConfig('SYNCHRO_PRODUCT_OTHER_FIELDS_A')),
+			//------------------------------
+			//- Synchro stock
+			'SYNCHRONISATION_STOCK' => (int)Gateway::getConfig('SYNCHRONISATION_STOCK'),
+			'SYNCHRO_STOCK_ONLY_ACTIVE' => (int)Gateway::getConfig('SYNCHRO_STOCK_ONLY_ACTIVE'),
+			//------------------------------
+			//- Synchro commande
+			'SYNCHRONISATION_ORDER' => (int)Gateway::getConfig('SYNCHRONISATION_ORDER'),
+			//------------------------------
+			//- Mapping order state P->N
+			't_neteven_order_state' => Gateway::getNetevenState(true),
+			't_order_state' => $t_order_state,
+			//------------------------------
+			//- Mapping order state N->P
+
+			//------------------------------
+			//- Maintenance et Debug
+			'SAND_BOX' => Gateway::getConfig('SAND_BOX'),
 			'MAIL_LIST_ALERT' => Tools::safeOutput(Tools::getValue('MAIL_LIST_ALERT', Gateway::getConfig('MAIL_LIST_ALERT'))),
 			'DEBUG' => (int)Gateway::getConfig('DEBUG'),
 			'SEND_REQUEST_BY_EMAIL' => (int)Gateway::getConfig('SEND_REQUEST_BY_EMAIL'),
-			'TYPE_SKU' => (int)(Gateway::getConfig('TYPE_SKU') !== false)?Gateway::getConfig('TYPE_SKU'):'reference'
+			//------------------------------
+			//- Livraison
+			'ACTIVE_SHIPPING' => (int)Gateway::getConfig('ACTIVE_SHIPPING'),
+			//------------------------------
+			//- Others
+			't_values' => $t_values,
+			't_fields' => $t_fields,
+			'languages' => LanguageCore::getLanguages(),
 		));
 
 		return $this->display(__FILE__, 'views/templates/admin/nqgatewayneteven.tpl');
@@ -511,7 +714,7 @@ class NqGatewayNeteven extends Module
 
 	public function getL($key = null)
 	{
-		$translations = array(
+		$translations = array (
 			'Send email to' => $this->l('Send email to'),
 			'Start' => $this->l('Start'),
 			'Total' => $this->l('Total'),
@@ -570,5 +773,14 @@ class NqGatewayNeteven extends Module
 			return $key;
 
 		return $translations[$key];
+	}
+
+	private function createAddress($id_country)
+	{
+		$result = Gateway::getAddressByCountry($id_country);
+
+		if (!$result)
+			Db::getInstance()->Execute('INSERT INTO '._DB_PREFIX_.'address (`id_country`, `alias`, `postcode`, `active`, `deleted`)
+				VALUES ('.(int)$id_country.', "adr gen neteven", '.(int)$id_country.', 1, 1)');
 	}
 }

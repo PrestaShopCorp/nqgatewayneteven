@@ -1,31 +1,31 @@
 <?php
-/*
-* 2007-2014 PrestaShop
-*
-* NOTICE OF LICENSE
-*
-* This source file is subject to the Open Software License (OSL 3.0)
-* that is bundled with this package in the file LICENSE.txt.
-* It is also available through the world-wide-web at this URL:
-* http://opensource.org/licenses/osl-3.0.php
-* If you did not receive a copy of the license and are unable to
-* obtain it through the world-wide-web, please send an email
-* to license@prestashop.com so we can send you a copy immediately.
-*
-* DISCLAIMER
-*
-* Do not edit or add to this file if you wish to upgrade PrestaShop to newer
-* versions in the future. If you wish to customize PrestaShop for your
-* needs please refer to http://www.prestashop.com for more information.
-*
-*  @author PrestaShop SA <contact@prestashop.com>
-*  @copyright  2007-2014 PrestaShop SA
-*  @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
-*  International Registered Trademark & Property of PrestaShop SA
-*/
+/**
+ * 2007-2015 PrestaShop
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@prestashop.com so we can send you a copy immediately.
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade PrestaShop to newer
+ * versions in the future. If you wish to customize PrestaShop for your
+ * needs please refer to http://www.prestashop.com for more information.
+ *
+ *  @author    PrestaShop SA <contact@prestashop.com>
+ *  @copyright 2007-2015 PrestaShop SA
+ *  @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ *  International Registered Trademark & Property of PrestaShop SA
+ */
 
 ini_set('memory_limit', '512M');
-set_time_limit (0);
+set_time_limit(0);
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
@@ -65,31 +65,31 @@ class Gateway
 	public static $send_product_to_neteven = true;
 	protected $client = null;
 	public static $translations = array();
-	
+
 	public function __construct($client = null)
 	{
 		if ($client)
 			$this->client = $client;
 		else
-		{	
+		{
 			$this->client = new SoapClient(Gateway::getConfig('NETEVEN_URL'), array('trace' => 1));
 			$auth = $this->createAuthentication(Gateway::getConfig('NETEVEN_LOGIN'), Gateway::getConfig('NETEVEN_PASSWORD'));
 			$this->client->__setSoapHeaders(new SoapHeader(Gateway::getConfig('NETEVEN_NS'), 'AuthenticationHeader', $auth));
 		}
-		
+
 		$connection = $this->testConnection();
-		
+
 		if ($connection != 'Accepted')
 			Toolbox::manageError('Connection non acceptée', 'connexion au webservice');
 
 		$this->affectProperties();
 		$this->affectTranslations();
 	}
-	
+
 	public function affectProperties()
 	{
 		$context = Context::getContext();
-		
+
 		// Get the configuration
 		$this->shipping_delay = Gateway::getConfig('SHIPPING_DELAY');
 		$this->comment = Gateway::getConfig('COMMENT');
@@ -99,10 +99,10 @@ class Gateway
 		$this->id_employee_neteven = (int)Gateway::getConfig('ID_EMPLOYEE_NETEVEN');
 		$this->id_customer_neteven = (int)Gateway::getConfig('ID_CUSTOMER_NETEVEN');
 		$this->id_order_state_neteven = (int)Gateway::getConfig('ID_ORDER_STATE_NETEVEN');
-		$this->shipping_price_local	= Gateway::getConfig('SHIPPING_PRICE_LOCAL');
+		$this->shipping_price_local = Gateway::getConfig('SHIPPING_PRICE_LOCAL');
 		$this->shipping_price_international = Gateway::getConfig('SHIPPING_PRICE_INTERNATIONAL');
 		$this->id_lang = (int)Configuration::get('PS_LANG_DEFAULT');
-		
+
 		// Get feature links NetEven/PrestaShop
 		$feature_links = Db::getInstance()->ExecuteS('
             SELECT ogfl.*, agl.`name` as attribute_name, fl.`name` as feature_name, ogf.`value`
@@ -114,53 +114,57 @@ class Gateway
             LEFT JOIN `'._DB_PREFIX_.'orders_gateway_feature` ogf
                 ON (ogf.`id_order_gateway_feature` = ogfl.`id_order_gateway_feature`)
         ');
-		
+
 		$temp = array();
-		foreach ($feature_links as $feature_link)
-			if (!empty($feature_link['id_attribute_group']))
-				$temp[$feature_link['attribute_name']] = $feature_link['value'];
-			else
-				$temp[$feature_link['feature_name']] = $feature_link['value'];
+		if ($feature_links)
+		{
+			foreach ($feature_links as $feature_link)
+				if (!empty($feature_link['id_attribute_group']))
+					$temp[$feature_link['attribute_name']] = $feature_link['value'];
+				else
+					$temp[$feature_link['feature_name']] = $feature_link['value'];
+		}
 
 		$this->feature_links = $temp;
 
 		/* Get order states */
 		if (Gateway::getConfig('ORDER_STATE_BEFORE'))
 			$this->order_state_before = explode(':', Gateway::getConfig('ORDER_STATE_BEFORE'));
-		
+
 		if (Gateway::getConfig('ORDER_STATE_AFTER'))
 			$this->order_state_after = explode(':', Gateway::getConfig('ORDER_STATE_AFTER'));
-		
+
 		$this->mail_list_alert = explode(':', Gateway::getConfig('MAIL_LIST_ALERT'));
 		$this->debug = (Gateway::getConfig('DEBUG') == 1) ? true : false;
 		$this->send_request_to_mail = (Gateway::getConfig('SEND_REQUEST_BY_EMAIL') == 1) ? true : false;
 		$this->mail_active = (Gateway::getConfig('MAIL_ACTIVE') == 1) ? true : false;
-		
+
 		if ($this->debug == true)
 		{
 			ini_set('display_errors', 1);
 			error_reporting(E_ALL);
 		}
 	}
-	
+
 	public function affectTranslations()
 	{
 		require_once(dirname(__FILE__).'/../nqgatewayneteven.php');
 		$nqgatewayneteven = new NqGatewayNeteven();
-		
+
 		self::$translations = $nqgatewayneteven->getL();
 	}
-	
+
 	public static function getL($key)
 	{
 		if (!isset(self::$translations[$key]))
 			return $key;
-		
+
 		return self::$translations[$key];
 	}
 
 	/**
 	 * Creating authentication
+	 *
 	 * @param $login
 	 * @param $password
 	 * @return array
@@ -170,7 +174,7 @@ class Gateway
 		$seed = '*';
 		$stamp = date('c', time());
 		$signature = base64_encode(md5(implode('/', array($login, $stamp, $seed, $password)), true));
-		
+
 		return array(
 			'Method' => '*',
 			'Login' => $login,
@@ -182,6 +186,7 @@ class Gateway
 
 	/**
 	 * Test of connection
+	 *
 	 * @return null|string
 	 */
 	private function testConnection()
@@ -203,6 +208,15 @@ class Gateway
 		return;
 	}
 
+	public function checkConnexion()
+	{
+		$result = $this->testConnection();
+		if ($result != 'Accepted')
+			return false;
+		else
+			return true;
+	}
+
 	public function getValue($name)
 	{
 		if (empty($this->id_order_state_neteven))
@@ -218,6 +232,7 @@ class Gateway
 		    FROM `'._DB_PREFIX_.'orders_gateway_configuration`
 		    WHERE name = "'.pSQL($name).'"
 		');
+
 		return $value ? $value : false;
 	}
 
@@ -228,7 +243,7 @@ class Gateway
 		    FROM `'._DB_PREFIX_.'orders_gateway_configuration`
 		    WHERE `name` = "'.pSQL($name).'"
 		');
-		
+
 		if (!$config_exist)
 			Db::getInstance()->Execute('
 			    INSERT INTO `'._DB_PREFIX_.'orders_gateway_configuration`
@@ -241,15 +256,38 @@ class Gateway
 			    SET `value` = "'.pSQL($value).'"
 			    WHERE `name` = "'.pSQL($name).'"
 			');
-		
+
 	}
-	
+
+	public static function deleteConfig($name)
+	{
+		return Db::getInstance()->Execute('DELETE
+		    FROM `'._DB_PREFIX_.'orders_gateway_configuration`
+		    WHERE `name` = "'.pSQL($name).'"
+		');
+	}
+
+	public static function deleteInactiveProduct($ids_product)
+	{
+		if (!is_array($ids_product))
+			$ids_product = array($ids_product);
+
+		Db::getInstance()->Execute('DELETE FROM `'._DB_PREFIX_.'orders_gateway_inactive_product`
+			WHERE id_product IN ('.implode(',', $ids_product).')');
+	}
+
+	public static function addInactiveProduct($id_product)
+	{
+		Db::getInstance()->Execute('REPLACE INTO `'._DB_PREFIX_.'orders_gateway_inactive_product` VALUES ('.(int)$id_product.')');
+	}
+
 	public function sendDebugMail($emails, $subject, $message, $classic_mail = false)
 	{
 		if (!$emails)
 			return;
 
 		foreach ($emails as $email)
+		{
 			if (Validate::isEmail($email))
 			{
 				if (!$classic_mail)
@@ -257,21 +295,9 @@ class Gateway
 					$id_lang = $this->id_lang ? (int)$this->id_lang : Configuration::get('PS_LANG_DEFAULT');
 					$shop_email = Configuration::get('PS_SHOP_EMAIL');
 					$shop_name = Configuration::get('PS_SHOP_NAME');
-					Mail::Send(
-                        $id_lang,
-                        'debug',
-                        $subject,
-                        array(
-                            '{message}' => $message
-                        ),
-                        $email,
-                        null,
-                        $shop_email,
-                        $shop_name,
-                        null,
-                        null,
-                        dirname(__FILE__).'/../mails/'
-                    );
+					Mail::Send($id_lang, 'debug', $subject, array(
+						'{message}' => $message
+					), $email, null, $shop_email, $shop_name, null, null, dirname(__FILE__).'/../mails/');
 				}
 				else
 					mail($email, $subject, $message);
@@ -279,6 +305,429 @@ class Gateway
 				if ($this->getValue('debug'))
 					Toolbox::displayDebugMessage(self::getL('Send email to').' : '.$email);
 			}
-
+		}
 	}
+
+	/**
+	 * Retourne la liste des champs spécifiques pour l'export de l'inventaire.
+	 */
+	public static function getFieldsMatchTab()
+	{
+		/*
+		values_group : pour les select.
+		type de values :
+		- field : champ donnée brut
+		- function : script nécessaire pour obtenir la valeur final (apelle d'une méthode: param données du produit) demande un autre param : callback
+		 */
+		$t_values = array(
+			'identifier' => array(
+				'ean13' => array(
+					'name' => 'EAN13',
+					'type' => 'field',
+				),
+				'upc' => array(
+					'name' => 'UPC',
+					'type' => 'field',
+				),
+				'reference' => array(
+					'name' => 'reference',
+					'type' => 'field',
+				),
+			),
+			'prices' => array(
+				'price_ht' => array(
+					'name' => 'Prix de vente HT',
+					'type' => 'function',
+					'callback' => 'getPriceHT',
+					'categoryLinked' => 0,
+				),
+				'price_ttc' => array(
+					'name' => 'Prix de vente TTC',
+					'type' => 'function',
+					'callback' => 'getPriceTTC',
+					'categoryLinked' => 1,
+				),
+				'price_ttc_without_reduc' => array(
+					'name' => 'Prix de vente TTC (Sans réduction)',
+					'type' => 'function',
+					'callback' => 'getPriceTTCWithoutReduc',
+					'categoryLinked' => 1,
+				),
+				'wholesale_price' => array(
+					'name' => 'Prix d\'achat',
+					'type' => 'field',
+					'categoryLinked' => 0,
+				),
+			),
+			'etat' => array(
+				'etat' => array(
+					'name' => 'etat',
+					'type' => 'function',
+					'callback' => 'getEtatNeteven'
+				),
+			),
+			'height' => array(
+				'height' => array(
+					'name' => 'height',
+					'type' => 'field',
+				),
+			),
+			'width' => array(
+				'width' => array(
+					'name' => 'width',
+					'type' => 'field',
+				),
+			),
+			'depth' => array(
+				'depth' => array(
+					'name' => 'depth',
+					'type' => 'field',
+				),
+			),
+		);
+
+		$t_fields = array(
+			//-------------------------
+			//- Product identifier
+			'EAN' => array(
+				'values_group' => 'identifier'
+			),
+			'UPC' => array(
+				'values_group' => 'identifier'
+			),
+			'ISBN' => array(
+				'values_group' => 'identifier'
+			),
+			'ASIN' => array(
+				'values_group' => 'identifier'
+			),
+			//-------------------------
+			//- Product prices
+			'PriceFixed' => array(
+				'values_group' => 'prices'
+			),
+			'PriceStarting' => array(
+				'values_group' => 'prices'
+			),
+			'PriceReserved' => array(
+				'values_group' => 'prices'
+			),
+			'PriceRetail' => array(
+				'values_group' => 'prices'
+			),
+			'PriceSecondChance' => array(
+				'values_group' => 'prices'
+			),
+			'PriceBestOffer' => array(
+				'values_group' => 'prices'
+			),
+			'PriceAdditional1' => array(
+				'values_group' => 'prices'
+			),
+			'PriceAdditional2' => array(
+				'values_group' => 'prices'
+			),
+			'PriceAdditional3' => array(
+				'values_group' => 'prices'
+			),
+			'PriceAdditional4' => array(
+				'values_group' => 'prices'
+			),
+			'PriceAdditional5' => array(
+				'values_group' => 'prices'
+			),
+			'Etat' => array(
+				'values_group' => 'etat'
+			),
+			'Height' => array(
+				'values_group' => 'height'
+			),
+			'Width' => array(
+				'values_group' => 'width'
+			),
+			'Depth' => array(
+				'values_group' => 'depth'
+			),
+		);
+
+		return array($t_values, $t_fields);
+	}
+
+	/**
+	 * Retourne la liste des champs supplémentaire pour la synchronisation de l'inventaire.
+	 */
+	public static function getOthersProductFields()
+	{
+		$context = ContextCore::getContext();
+		$t_fields = array();
+
+		/*
+		 * Product table fields
+		 */
+		$t_fields['product_fields'] = array(
+			'on_sale',
+			'online_only',
+			'minimal_quantity',
+			'location',
+			'out_of_stock',
+			'customizable',
+			'uploadable_files',
+			'text_fields',
+			'active',
+			'available_for_order',
+			'wholesale_price',
+			'date_add',
+			'date_upd'
+		);
+		$t_fields['product_lang_fields'] = array(
+			'description_short',
+			'meta_description',
+			'meta_keywords',
+			'meta_title',
+			'available_now',
+			'available_later',
+			'description_without_HTML',
+			'description_with_HTML'
+		);
+		$t_fields['product_attribute_fields'] = array('location', 'minimal_quantity', 'default_on');
+
+		/*
+		 * Feature fields
+		 */
+		$t_fields['feature_fields'] = Feature::getFeatures($context->language->id);
+
+		/*
+		 * Attribute fields
+		 */
+		$t_fields['attribute_fields'] = AttributeGroup::getAttributesGroups($context->language->id);
+
+		return $t_fields;
+	}
+
+	public static function getMatchingProductFields()
+	{
+		// Matcing entre les nom des champs en base et les nom des champs a remplir pour NetEven.
+		$match_fields = array(
+			'name' => 'title',
+			'ean13' => 'ean',
+			'upc' => 'UPC',
+			'description_with_HTML' => 'description_with_html',
+			'description_without_HTML' => 'description_without_html',
+
+		);
+
+		return $match_fields;
+	}
+
+
+	/**
+	 * Retourne la liste des langues gérées par Neteven.
+	 * Si $with_config, reprend aussi le mapping actuel avec les langue de Presta.
+	 */
+	public static function getNetevenLanguages($with_config = false)
+	{
+		$neteven_languages = array(
+			'fr' => array(
+				'name' => 'fr',
+				'code' => 'FR',
+			),
+			'en' => array(
+				'name' => 'en',
+				'code' => 'EN',
+			),
+			'es' => array(
+				'name' => 'es',
+				'code' => 'ES',
+			),
+			'de' => array(
+				'name' => 'de',
+				'code' => 'DE',
+			),
+			'it' => array(
+				'name' => 'it',
+				'code' => 'IT',
+			),
+		);
+
+		if ($with_config)
+		{
+			foreach ($neteven_languages as &$language)
+			{
+				$language['config'] = self::getConfig('SYNCHRO_PRODUCT_LANG_'.$language['code']);
+				$language['active'] = (int)self::getConfig('SYNCHRO_PRODUCT_LANG_ACTIVE_'.$language['code']);
+			}
+		}
+
+		return $neteven_languages;
+	}
+
+	/**
+	 * Retourne la liste des statuts de commande Neteven.
+	 *
+	 * @param bool $with_config
+	 * @return array
+	 */
+	public static function getNetevenState($with_config = false)
+	{
+		/*
+		 * can_use      : utilisable comme statut à envoyé via le mapping Prestashop => Neteven
+		 * accepted     : statut pris en compte lors de l'omport des commande depuis Neteven //TODO: unesed now.
+		 * ------
+		 * private $t_list_order_status = array('Canceled', 'Refunded', 'Shipped', 'toConfirmed');
+		 * private $t_list_order_status_traite = array('Shipped', 'toConfirmed', 'toConfirm', 'Confirmed');
+		 * private $t_list_order_status_retraite_order = array('Canceled', 'Refunded');
+		 */
+		$neteven_state = array(
+			'Confirmed' => array(
+				'index' => 'Confirmed',
+				'name' => 'Confirmed',
+				'can_use' => 1,
+				'accepted' => 1,
+				'in_total_price' => 1,
+			),
+			'Canceled' => array(
+				'index' => 'Canceled',
+				'name' => 'Canceled',
+				'can_use' => 1,
+				'accepted' => 0,
+				'in_total_price' => 0,
+			),
+			'Refunded' => array(
+				'index' => 'Refunded',
+				'name' => 'Refunded',
+				'can_use' => 1,
+				'accepted' => 0,
+				'in_total_price' => 0,
+			),
+			'Shipped' => array(
+				'index' => 'Shipped',
+				'name' => 'Shipped',
+				'can_use' => 1,
+				'accepted' => 0,
+				'in_total_price' => 1,
+			),
+			'toConfirm' => array(
+				'index' => 'toConfirm',
+				'name' => 'toConfirm',
+				'can_use' => 1,
+				'accepted' => 1,
+				'in_total_price' => 1,
+			),
+		);
+
+		if ($with_config)
+			foreach ($neteven_state as &$row)
+				$row['config'] = (int)Gateway::getConfig('MAPPING_STATE_'.$row['index']);
+
+		return $neteven_state;
+	}
+
+
+	/**
+	 * Méthodes de callback.
+	 */
+	protected function getCurrencyIsoForProduct($id_country)
+	{
+		$currency = '';
+		if (version_compare(_PS_VERSION_, '1.4', '>=') && version_compare(_PS_VERSION_, '1.5', '<'))
+		{
+			$oCountry = new Country($id_country);
+			$oCurrency = new Currency($oCountry->id_currency);
+			$currency = $oCurrency->iso_code;
+		}
+		else
+		{
+			$oCountry = new Country($id_country);
+			$oCurrency = new Currency($oCountry->id_currency);
+			$currency = $oCurrency->iso_code;
+		}
+
+		return $currency;
+	}
+
+	protected function getPriceHT($product)
+	{
+		return Product::getPriceStatic((int)$product['id_product'], false, (int)$product['id_product_attribute'], 2, null, false, true, 1, false, null, null);
+	}
+
+	protected function getPriceTTC($product)
+	{
+		$id_address = Gateway::getAddressByCountry($product['id_country']);
+
+		if (version_compare(_PS_VERSION_, '1.4', '>=') && version_compare(_PS_VERSION_, '1.5', '<'))
+		{
+			global $cookie;
+			$oAddress = new Address($id_address);
+			$oCountry = new Country($oAddress->id_country);
+			$cookie->id_currency = $oCountry->id_currency;
+
+			return Product::getPriceStatic((int)$product['id_product'], true, (int)$product['id_product_attribute'], 2, null, false, true, 1, false, null, null, $id_address);
+		}
+		else
+		{
+			$useless = array();
+			$currentContext = Context::getContext();
+			$oAddress = new Address($id_address);
+			$oCountry = new Country($oAddress->id_country);
+			$currentContext->currency = new Currency($oCountry->id_currency);
+
+			return Product::getPriceStatic((int)$product['id_product'], true, (int)$product['id_product_attribute'], 2, null, false, true, 1, false, null, null, $id_address, $useless, true, true, $currentContext);
+		}
+	}
+
+	protected function getPriceTTCWithoutReduc($product)
+	{
+		$id_address = Gateway::getAddressByCountry($product['id_country']);
+
+		if (version_compare(_PS_VERSION_, '1.4', '>=') && version_compare(_PS_VERSION_, '1.5', '<'))
+		{
+			global $cookie;
+			$oAddress = new Address($id_address);
+			$oCountry = new Country($oAddress->id_country);
+			$cookie->id_currency = $oCountry->id_currency;
+
+			return Product::getPriceStatic((int)$product['id_product'], true, (int)$product['id_product_attribute'], 2, null, false, false, 1, false, null, null, $id_address);
+		}
+		else
+		{
+			$useless = array();
+			$currentContext = Context::getContext();
+			$oAddress = new Address($id_address);
+			$oCountry = new Country($oAddress->id_country);
+			$currentContext->currency = new Currency($oCountry->id_currency);
+
+			return Product::getPriceStatic((int)$product['id_product'], true, (int)$product['id_product_attribute'], 2, null, false, false, 1, false, null, null, $id_address, $useless, true, true, $currentContext);
+		}
+	}
+
+	protected function getEtatNeteven($product)
+	{
+		$etat_presta_to_neteven = array(
+			'new' => 11,
+			'used' => 1,
+			'refurbished' => 9,
+		);
+
+		$etat = 0;
+		if (!empty($product['condition']) && isset($etat_presta_to_neteven[$product['condition']]))
+			$etat = $etat_presta_to_neteven[$product['condition']];
+
+		return $etat;
+	}
+
+	public static function getAddressByCountry($id_country)
+	{
+		return (int)Db::getInstance()->getValue('SELECT id_address FROM '._DB_PREFIX_.'address WHERE alias = "adr gen neteven" AND id_country = '.(int)$id_country);
+	}
+
+
+	/**
+	 *
+	 */
+	public static function setStepAjaxCron($step, $message, $uniqkey)
+	{
+		Gateway::updateConfig('SYNCHRO_PRODUCT_STEP_'.$uniqkey, (int)$step);
+		Gateway::updateConfig('SYNCHRO_PRODUCT_MESSAGE_'.$uniqkey, $message);
+	}
+
 }
