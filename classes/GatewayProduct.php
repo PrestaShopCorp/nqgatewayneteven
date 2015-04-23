@@ -363,7 +363,7 @@ class GatewayProduct extends Gateway
 				'Brand' => !empty($product['name_manufacturer']) ? $product['name_manufacturer'] : $this->getValue('default_brand')
 			);
 
-			// On ne prend pas le SLU family si le produit n'a pas de déclinaison.
+			// On ne prend pas le SKU family si le produit n'a pas de déclinaison.
 			if (empty($products_temp[$indice]['SKUFamily']))
 				unset($products_temp[$indice]['SKUFamily']);
 

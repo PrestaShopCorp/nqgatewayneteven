@@ -104,7 +104,7 @@ class Gateway
 		$this->id_lang = (int)Configuration::get('PS_LANG_DEFAULT');
 
 		// Get feature links NetEven/PrestaShop
-		$feature_links = Db::getInstance()->ExecuteS('
+		$feature_links = Db::getInstance()->executeS('
             SELECT ogfl.*, agl.`name` as attribute_name, fl.`name` as feature_name, ogf.`value`
             FROM `'._DB_PREFIX_.'orders_gateway_feature_link` ogfl
             LEFT JOIN `'._DB_PREFIX_.'attribute_group_lang` agl
@@ -116,7 +116,7 @@ class Gateway
         ');
 
 		$temp = array();
-		if ($feature_links)
+		if (is_array($feature_links))
 		{
 			foreach ($feature_links as $feature_link)
 				if (!empty($feature_link['id_attribute_group']))
@@ -151,15 +151,15 @@ class Gateway
 		require_once(dirname(__FILE__).'/../nqgatewayneteven.php');
 		$nqgatewayneteven = new NqGatewayNeteven();
 
-		self::$translations = $nqgatewayneteven->getL();
+        Gateway::$translations = $nqgatewayneteven->getL();
 	}
 
 	public static function getL($key)
 	{
-		if (!isset(self::$translations[$key]))
+		if (!isset(Gateway::$translations[$key]))
 			return $key;
 
-		return self::$translations[$key];
+		return Gateway::$translations[$key];
 	}
 
 	/**
@@ -210,11 +210,7 @@ class Gateway
 
 	public function checkConnexion()
 	{
-		$result = $this->testConnection();
-		if ($result != 'Accepted')
-			return false;
-		else
-			return true;
+		$result = ($this->testConnection() == 'Accepted');
 	}
 
 	public function getValue($name)
@@ -245,13 +241,13 @@ class Gateway
 		');
 
 		if (!$config_exist)
-			Db::getInstance()->Execute('
+			Db::getInstance()->execute('
 			    INSERT INTO `'._DB_PREFIX_.'orders_gateway_configuration`
 			    (`name`, `value`)
 			    VALUES ("'.pSQL($name).'", "'.pSQL($value).'")
 			');
 		else
-			Db::getInstance()->Execute('
+			Db::getInstance()->execute('
 			    UPDATE `'._DB_PREFIX_.'orders_gateway_configuration`
 			    SET `value` = "'.pSQL($value).'"
 			    WHERE `name` = "'.pSQL($name).'"
@@ -261,7 +257,7 @@ class Gateway
 
 	public static function deleteConfig($name)
 	{
-		return Db::getInstance()->Execute('DELETE
+		return Db::getInstance()->execute('DELETE
 		    FROM `'._DB_PREFIX_.'orders_gateway_configuration`
 		    WHERE `name` = "'.pSQL($name).'"
 		');
@@ -272,13 +268,13 @@ class Gateway
 		if (!is_array($ids_product))
 			$ids_product = array($ids_product);
 
-		Db::getInstance()->Execute('DELETE FROM `'._DB_PREFIX_.'orders_gateway_inactive_product`
+		Db::getInstance()->execute('DELETE FROM `'._DB_PREFIX_.'orders_gateway_inactive_product`
 			WHERE id_product IN ('.implode(',', $ids_product).')');
 	}
 
 	public static function addInactiveProduct($id_product)
 	{
-		Db::getInstance()->Execute('REPLACE INTO `'._DB_PREFIX_.'orders_gateway_inactive_product` VALUES ('.(int)$id_product.')');
+		Db::getInstance()->execute('REPLACE INTO `'._DB_PREFIX_.'orders_gateway_inactive_product` VALUES ('.(int)$id_product.')');
 	}
 
 	public function sendDebugMail($emails, $subject, $message, $classic_mail = false)
@@ -303,21 +299,21 @@ class Gateway
 					mail($email, $subject, $message);
 
 				if ($this->getValue('debug'))
-					Toolbox::displayDebugMessage(self::getL('Send email to').' : '.$email);
+					Toolbox::displayDebugMessage(Gateway::getL('Send email to').' : '.$email);
 			}
 		}
 	}
 
 	/**
-	 * Retourne la liste des champs spécifiques pour l'export de l'inventaire.
+	 * Returns a list of specific fields to export the inventory.
 	 */
 	public static function getFieldsMatchTab()
 	{
 		/*
-		values_group : pour les select.
-		type de values :
-		- field : champ donnée brut
-		- function : script nécessaire pour obtenir la valeur final (apelle d'une méthode: param données du produit) demande un autre param : callback
+		values_group : for select
+		type of values :
+		- field : data
+		- function : script needed to obtain the final value (called a method: param product data) asks another param: callback
 		 */
 		$t_values = array(
 			'identifier' => array(
@@ -458,7 +454,7 @@ class Gateway
 	 */
 	public static function getOthersProductFields()
 	{
-		$context = ContextCore::getContext();
+		$context =  Context::getContext();
 		$t_fields = array();
 
 		/*
@@ -553,8 +549,8 @@ class Gateway
 		{
 			foreach ($neteven_languages as &$language)
 			{
-				$language['config'] = self::getConfig('SYNCHRO_PRODUCT_LANG_'.$language['code']);
-				$language['active'] = (int)self::getConfig('SYNCHRO_PRODUCT_LANG_ACTIVE_'.$language['code']);
+				$language['config'] = Gateway::getConfig('SYNCHRO_PRODUCT_LANG_'.$language['code']);
+				$language['active'] = (int)Gateway::getConfig('SYNCHRO_PRODUCT_LANG_ACTIVE_'.$language['code']);
 			}
 		}
 
@@ -628,21 +624,16 @@ class Gateway
 	 */
 	protected function getCurrencyIsoForProduct($id_country)
 	{
-		$currency = '';
-		if (version_compare(_PS_VERSION_, '1.4', '>=') && version_compare(_PS_VERSION_, '1.5', '<'))
-		{
-			$oCountry = new Country($id_country);
-			$oCurrency = new Currency($oCountry->id_currency);
-			$currency = $oCurrency->iso_code;
-		}
-		else
-		{
-			$oCountry = new Country($id_country);
-			$oCurrency = new Currency($oCountry->id_currency);
-			$currency = $oCurrency->iso_code;
-		}
+        $oCountry = new Country((int)$id_country);
+        $oCurrency = new Currency((int)$oCountry->id_currency);
 
-		return $currency;
+        if(!empty($oCurrency->iso_code)){
+            return $oCurrency->iso_code;
+        }else{
+            return '';
+        }
+
+
 	}
 
 	protected function getPriceHT($product)
@@ -652,7 +643,7 @@ class Gateway
 
 	protected function getPriceTTC($product)
 	{
-		$id_address = Gateway::getAddressByCountry($product['id_country']);
+		$id_address = (int)Gateway::getAddressByCountry((int)$product['id_country']);
 
 		if (version_compare(_PS_VERSION_, '1.4', '>=') && version_compare(_PS_VERSION_, '1.5', '<'))
 		{

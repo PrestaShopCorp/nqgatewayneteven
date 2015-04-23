@@ -146,7 +146,11 @@ class GatewayOrder extends Gateway
 			{
 				self::$synchro_order_current++;
 				$temp[$neteven_order->OrderID] = 2;
-				Gateway::setStepAjaxCron(2, 'Processed : '.(int)ceil((self::$synchro_order_current * 100) / self::$synchro_order_total).' % - Commande : '.self::$synchro_order_current.' / '.(int)self::$synchro_order_total, Tools::getValue('uniqkey'));
+
+                if(!empty(self::$synchro_order_total)){
+                    Gateway::setStepAjaxCron(2, 'Processed : '.(int)ceil((self::$synchro_order_current * 100) / self::$synchro_order_total).' % - Commande : '.self::$synchro_order_current.' / '.(int)self::$synchro_order_total, Tools::getValue('uniqkey'));
+                }
+
 			}
 		}
 
@@ -243,7 +247,9 @@ class GatewayOrder extends Gateway
 			if (method_exists('Tax', 'getCarrierTaxRate'))
 				$carrier_tax_rate = (float)Tax::getCarrierTaxRate($order->id_carrier, (int)$order->{Configuration::get('PS_TAX_ADDRESS_TYPE')});
 
-			$total_shipping_tax_excl = $carrier_tax_rate ? $neteven_order->OrderShippingCost->_ / ($carrier_tax_rate / 100) : $neteven_order->OrderShippingCost->_;
+
+
+			$total_shipping_tax_excl = !empty($carrier_tax_rate) ? $neteven_order->OrderShippingCost->_ / ($carrier_tax_rate / 100) : $neteven_order->OrderShippingCost->_;
 
 			$total_wt = $total_product_wt + $neteven_order->OrderShippingCost->_;
 			$total = $total_product + $total_shipping_tax_excl;
@@ -412,7 +418,7 @@ class GatewayOrder extends Gateway
 		}
 
 		/* Creating and add order in PrestaShop */
-		if (!$res = Db::getInstance()->getRow('SELECT * FROM `'._DB_PREFIX_.'orders_gateway` WHERE `id_order_neteven` = '.(int)$neteven_order->OrderID.' && `id_order_detail_neteven` = 0'))
+		if (!$res = Db::getInstance()->getRow('SELECT * FROM `'._DB_PREFIX_.'orders_gateway` WHERE `id_order_neteven` = '.(int)$neteven_order->OrderID.' AND `id_order_detail_neteven` = 0'))
 		{
 			// Changement de la devise si besoin.
 			$id_currency = (int)Configuration::get('PS_CURRENCY_DEFAULT');
@@ -420,7 +426,7 @@ class GatewayOrder extends Gateway
 			{
 
 				$id_currency_override = (int)Db::getInstance()->getValue('SELECT `id_currency` FROM '._DB_PREFIX_.'currency
-					WHERE `iso_code` = "'.$neteven_order->AmountPaid->currency_id.'" AND `active` = 1 AND `deleted` = 0');
+					WHERE `iso_code` = "'.pSQL($neteven_order->AmountPaid->currency_id).'" AND `active` = 1 AND `deleted` = 0');
 				if ($id_currency_override)
 					$id_currency = $id_currency_override;
 			}
@@ -688,8 +694,18 @@ class GatewayOrder extends Gateway
 					$current_tax_name = $tax_manager->getTaxCalculator()->getTaxesName();
 				}
 
-				$price_product = ($neteven_order->Price->_ - (float)$neteven_order->VAT->_) / $neteven_order->Quantity;
-				$price_product_ttc = ($neteven_order->Price->_) / $neteven_order->Quantity;
+                if ($neteven_order->Quantity)
+                {
+                    $price_product = ($neteven_order->Price->_ - (float)$neteven_order->VAT->_) / $neteven_order->Quantity;
+                    $price_product_ttc = ($neteven_order->Price->_) / $neteven_order->Quantity;
+                }
+                else
+                {
+				    $price_product = 0;
+                    $price_product_ttc = 0;
+                }
+
+
 
 				$order_detail = new OrderDetail();
 				$order_detail->id_order = $id_order;
@@ -794,7 +810,9 @@ class GatewayOrder extends Gateway
 					{
 						// add detail taxe for order //
 						$order = new Order((int)$id_order);
-						$order_detail->updateTaxAmount($order);
+                        if (Validate::isLoadedObject($order))
+                            $order_detail->updateTaxAmount($order);
+
 					}
 				}
 			}
