@@ -1,5 +1,5 @@
 {*
-* 2007-2014 PrestaShop
+* 2007-2015 PrestaShop
 *
 * NOTICE OF LICENSE
 *
@@ -18,8 +18,8 @@
 * needs please refer to http://www.prestashop.com for more information.
 *
 *  @author PrestaShop SA <contact@prestashop.com>
-*  @copyright  2007-2014 PrestaShop SA
-*  @license	http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+*  @copyright  2007-2015 PrestaShop SA
+*  @license    http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
 *  International Registered Trademark & Property of PrestaShop SA
 *}
 
@@ -31,11 +31,11 @@
 	var SHIPPING_ZONE_FRANCE = "{$SHIPPING_ZONE_FRANCE|floatval}";
 	var SHIPPING_CARRIER_INTERNATIONAL = "{$SHIPPING_CARRIER_INTERNATIONAL|floatval}";
 </script>
-<script type="text/javascript" src="{$module_dir|escape:'htmlall':'UTF-8'}js/nqgatewayneteven.js"></script>
-<link href="{$module_dir|escape:'htmlall':'UTF-8'}css/nqgatewayneteven.css" rel="stylesheet" type="text/css" media="all" />
+<script type="text/javascript" src="{$module_dir|escape:'htmlall':'UTF-8'}views/js/nqgatewayneteven.js"></script>
+<link href="{$module_dir|escape:'htmlall':'UTF-8'}views/css/nqgatewayneteven.css" rel="stylesheet" type="text/css" media="all" />
 
 <fieldset>
-	<h2 style="margin-top: 0;"><a href="http://www.neteven.com/" target="_blank"><img src="{$module_path|escape:'htmlall':'UTF-8'}/img/logo.gif" style="vertical-align:middle; margin-right:15px;" alt="{$module_display_name|escape:'htmlall':'UTF-8'}" /></a></h2>
+	<h2 style="margin-top: 0;"><a href="http://www.neteven.com/" target="_blank"><img src="{$module_path|escape:'htmlall':'UTF-8'}/views/img/logo.gif" style="vertical-align:middle; margin-right:15px;" alt="{$module_display_name|escape:'htmlall':'UTF-8'}" /></a></h2>
 
 	<p class="neteven-description-title">{l s='NetEven, logiciel et services dediés à la gestion des marketplaces européennes' mod='nqgatewayneteven'}</p>
 	<p>
@@ -70,39 +70,86 @@
 	<a href="/modules/nqgatewayneteven/Neteven_module_Prestashop.pdf" target="_blank">{l s='Voir la documentation' mod='nqgatewayneteven'}</a>
 </fieldset>
 
+{assign "default_select_value" "--"}
+
+{***********************************************************************}
+{*  Connexion *}
+{***********************************************************************}
 <form action="" method="post">
 <fieldset style="margin-top: 15px;" >
-	<legend><img src="../img/admin/cog.gif" alt="{l s='Paramètres' mod='nqgatewayneteven'}" class="middle" />{l s='Paramètres' mod='nqgatewayneteven'}</legend>
+	<legend><img src="../img/admin/cog.gif" alt="{l s='Paramètres de connexion' mod='nqgatewayneteven'}" class="middle" />{l s='Paramètres de connexion' mod='nqgatewayneteven'}</legend>
 	<div class="warning">{l s='Attention, ces paramètres sont indispensable au fonctionnement du module.' mod='nqgatewayneteven'}</div>
 	<label>{l s='Identifiant NetEven' mod='nqgatewayneteven'}</label>
 	<div class="margin-form">
-		<input type="text" name="NETEVEN_LOGIN" value="{$NETEVEN_LOGIN|escape:'htmlall':'UTF-8'}" />
+		<input type="text" id="NETEVEN_LOGIN" name="NETEVEN_LOGIN" value="{$NETEVEN_LOGIN|escape:'htmlall':'UTF-8'}" />
 	</div>
 	<label>{l s='Mot de passe NetEven' mod='nqgatewayneteven'}</label>
 	<div class="margin-form">
-		<input type="password" name="NETEVEN_PASSWORD" value="{$NETEVEN_PASSWORD|escape:'htmlall':'UTF-8'}" />
+		<input type="password" id="NETEVEN_PASSWORD" name="NETEVEN_PASSWORD" value="{$NETEVEN_PASSWORD|escape:'htmlall':'UTF-8'}" />
 	</div>
-
-	<label>{l s='Synchronisation des commandes' mod='nqgatewayneteven'}</label>
-	<div class="margin-form">
-		<input type="radio" name="SYNCHRONISATION_ORDER" id="SYNCHRONISATION_ORDER_on" value="1"{if $SYNCHRONISATION_ORDER} checked="checked"{/if} />
-		<label class="t" for="SYNCHRONISATION_ORDER_on"> <img src="../img/admin/enabled.gif" alt="{l s='Oui' mod='nqgatewayneteven'}" title="{l s='Oui' mod='nqgatewayneteven'}" /></label>
-		<input type="radio" name="SYNCHRONISATION_ORDER" id="SYNCHRONISATION_ORDER_off" value="0"{if !$SYNCHRONISATION_ORDER} checked="checked"{/if} />
-		<label class="t" for="SYNCHRONISATION_ORDER_off"> <img src="../img/admin/disabled.gif" alt="{l s='Non' mod='nqgatewayneteven'}" title="{l s='Non' mod='nqgatewayneteven'}" /></label>
-		<br class="clear"/>
-		<a target="_blank" href="{$cron_order_url|escape:'htmlall':'UTF-8'}"><input style="margin-top:10px;" type="button" value="{l s='Forcer la synchonisation des commandes' mod='nqgatewayneteven'}"/></a>
+	<br class="clear" />
+	<div style="display:none;" id="conf-connexion-success" class="conf-connexion conf confirm">
+		{l s='Vos identifiants ont été correctement validés.' mod='nqgatewayneteven'}
 	</div>
+	<div style="display:none;" id="conf-connexion-error" class="conf-connexion error">
+		{l s='Vos identifiants n’ont pas été reconnu. Veuillez-vous rapprocher de votre responsable de compte Neteven.' mod='nqgatewayneteven'}
+	</div>
+	<br class="clear" />
+	<div style="text-align: center;">
+		<input type="button" id="submitTestConnexion" value="{l s='Tester les paramètres de connexion' mod='nqgatewayneteven'}" class="button" />
+		<input type="submit" name="submitNetEvenConnexion" value="{l s='Enregistrer' mod='nqgatewayneteven'}" class="button" />
+	</div>
+</fieldset>
 
-	<label>{l s='Synchonisation des produits' mod='nqgatewayneteven'}</label>
+{***********************************************************************}
+{*  Synchronisation des produits *}
+{***********************************************************************}
+<fieldset style="margin-top: 15px;" >
+	<legend><img src="../img/admin/cog.gif" alt="{l s='Synchronisation de l\'inventaire' mod='nqgatewayneteven'}" class="middle" />{l s='Synchronisation de l\'inventaire' mod='nqgatewayneteven'}</legend>
+	<label>{l s='Actif' mod='nqgatewayneteven'}</label>
 	<div class="margin-form">
 		<input type="radio" name="SYNCHRONISATION_PRODUCT" id="SYNCHRONISATION_PRODUCT_on" value="1"{if $SYNCHRONISATION_PRODUCT} checked="checked"{/if} />
 		<label class="t" for="SYNCHRONISATION_PRODUCT_on"> <img src="../img/admin/enabled.gif" alt="{l s='Oui' mod='nqgatewayneteven'}" title="{l s='Oui' mod='nqgatewayneteven'}" /></label>
 		<input type="radio" name="SYNCHRONISATION_PRODUCT" id="SYNCHRONISATION_PRODUCT_off" value="0"{if !$SYNCHRONISATION_PRODUCT} checked="checked"{/if} />
 		<label class="t" for="SYNCHRONISATION_PRODUCT_off"> <img src="../img/admin/disabled.gif" alt="{l s='Non' mod='nqgatewayneteven'}" title="{l s='Non' mod='nqgatewayneteven'}" /></label>
 		<br class="clear"/>
-		<a target="_blank" href="{$cron_product_url|escape:'htmlall':'UTF-8'}"><input style="margin-top:10px;" type="button" value="{l s='Forcer la synchronisation des produits' mod='nqgatewayneteven'}"/></a>
+		<a target="_blank" href="{$cron_product_url|escape:'htmlall':'UTF-8'}&f=1"><input style="margin-top:10px;" type="button" value="{l s='Forcer la synchronisation des produits' mod='nqgatewayneteven'}"/></a>
 	</div>
-	<br /><br />
+
+	<label>{l s='URL de synchronisation' mod='nqgatewayneteven'}</label>
+	<div class="margin-form">
+		<span >{$cron_product_url|escape:'htmlall':'UTF-8'}</span>
+	</div>
+
+	<label>{l s='Exporter seulement les produit actif' mod='nqgatewayneteven'}</label>
+	<div class="margin-form">
+		{assign "field_index" "SYNCHRO_PRODUCT_ONLY_ACTIVE"}
+		<input type="radio" name="{$field_index}" id="{$field_index}_on" value="1"{if $SYNCHRO_PRODUCT_ONLY_ACTIVE} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_on"> <img src="../img/admin/enabled.gif" alt="{l s='Oui' mod='nqgatewayneteven'}" title="{l s='Oui' mod='nqgatewayneteven'}" /></label>
+		<input type="radio" name="{$field_index}" id="{$field_index}_off" value="0"{if !$SYNCHRO_PRODUCT_ONLY_ACTIVE} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_off"> <img src="../img/admin/disabled.gif" alt="{l s='Non' mod='nqgatewayneteven'}" title="{l s='Non' mod='nqgatewayneteven'}" /></label>
+	</div>
+
+	<label>{l s='Exporter les produit hors stock' mod='nqgatewayneteven'}</label>
+	<div class="margin-form">
+		{assign "field_index" "SYNCHRO_PRODUCT_OOS"}
+		<input type="radio" name="{$field_index}" id="{$field_index}_on" value="1"{if $SYNCHRO_PRODUCT_OOS} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_on"> <img src="../img/admin/enabled.gif" alt="{l s='Oui' mod='nqgatewayneteven'}" title="{l s='Oui' mod='nqgatewayneteven'}" /></label>
+		<input type="radio" name="{$field_index}" id="{$field_index}_off" value="0"{if !$SYNCHRO_PRODUCT_OOS} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_off"> <img src="../img/admin/disabled.gif" alt="{l s='Non' mod='nqgatewayneteven'}" title="{l s='Non' mod='nqgatewayneteven'}" /></label>
+	</div>
+
+	<label>{l s='Exporter les informations globales' mod='nqgatewayneteven'}</label>
+	<div class="margin-form">
+		{assign "field_index" "SYNCHRO_PRODUCT_PARENT"}
+		<input type="radio" name="{$field_index}" id="{$field_index}_on" value="1"{if $SYNCHRO_PRODUCT_PARENT} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_on"> <img src="../img/admin/enabled.gif" alt="{l s='Oui' mod='nqgatewayneteven'}" title="{l s='Oui' mod='nqgatewayneteven'}" /></label>
+		<input type="radio" name="{$field_index}" id="{$field_index}_off" value="0"{if !$SYNCHRO_PRODUCT_PARENT} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_off"> <img src="../img/admin/disabled.gif" alt="{l s='Non' mod='nqgatewayneteven'}" title="{l s='Non' mod='nqgatewayneteven'}" /></label>
+		<span>{l s='Envoi des attributs du produit parent sir vide qsur la produit décliné' mod='nqgatewayneteven'}</span>
+	</div>
+
+	<br/><hr/>
 	<label>{l s='Nom de la marque par défaut' mod='nqgatewayneteven'}</label>
 	<div class="margin-form">
 		<input type="text" name="DEFAULT_BRAND" value="{$DEFAULT_BRAND|escape:'htmlall':'UTF-8'}" /> <em>({l s='utilisé pour les produits sans marque' mod='nqgatewayneteven'})</em>
@@ -111,35 +158,358 @@
 	<div class="margin-form">
 		<select name="IMAGE_TYPE_NAME">
 			<option value="">{l s='--' mod='nqgatewayneteven'}</option>';
-		{foreach from=$format_images item=format_image}
-			<option value="{$format_image.name|escape:'htmlall':'UTF-8'}"{if $format_image.name == $IMAGE_TYPE_NAME} selected="selected"{/if}>{$format_image.name|escape:'htmlall':'UTF-8'}</option>
-		{/foreach}
+			{foreach from=$format_images item=format_image}
+				<option value="{$format_image.name|escape:'htmlall':'UTF-8'}"{if $format_image.name == $IMAGE_TYPE_NAME} selected="selected"{/if}>{$format_image.name|escape:'htmlall':'UTF-8'}</option>
+			{/foreach}
 		</select>
 	</div>
 
 	<label>{l s='Type SKU' mod='nqgatewayneteven'}</label>
 	<div class="margin-form">
 		<input type="radio" name="TYPE_SKU" id="TYPE_SKU_ref" value="reference"{if $TYPE_SKU == 'reference'} checked="checked"{/if} />
-		<label class="t" for="TYPE_SKU_ref">{l s='référence'}</label>
+		<label class="t" for="TYPE_SKU_ref">{l s='référence' mod='nqgatewayneteven'}</label>
 		<input type="radio" name="TYPE_SKU" id="TYPE_SKU_id" value="id"{if $TYPE_SKU == 'id'} checked="checked"{/if} />
-		<label class="t" for="TYPE_SKU_id"> {l s='id produit / id déclinaison'}</label>
+		<label class="t" for="TYPE_SKU_id"> {l s='id produit / id déclinaison' mod='nqgatewayneteven'}</label>
 		<br class="clear"/>
+	</div>
+	<br/><hr/>
+
+
+	<label>{l s='Attributs à synchroniser' mod='nqgatewayneteven'}</label>
+	<div class="margin-form">
+		<select name="SYNCHRO_PRODUCT_OTHER_FIELDS[]" multiple="multiple" size="10">
+			<optgroup label="{l s='Produit' mod='nqgatewayneteven'}">
+				{foreach from=$SYNCHRO_PRODUCT_OTHER_FIELDS.product_fields item=field}
+					<option value="P¤{$field}" {if in_array($field, $SYNCHRO_PRODUCT_OTHER_FIELDS_P)}selected="selected" {/if}>{$field}</option>
+				{/foreach}
+				{foreach from=$SYNCHRO_PRODUCT_OTHER_FIELDS.product_lang_fields item=field}
+					<option value="PL¤{$field}" {if in_array($field, $SYNCHRO_PRODUCT_OTHER_FIELDS_PL)}selected="selected" {/if}>{$field}</option>
+				{/foreach}
+			</optgroup>
+			<optgroup label="{l s='Features' mod='nqgatewayneteven'}">
+				{foreach from=$SYNCHRO_PRODUCT_OTHER_FIELDS.feature_fields item=field}
+					<option value="F¤{$field.id_feature}" {if in_array($field.id_feature, $SYNCHRO_PRODUCT_OTHER_FIELDS_F)}selected="selected" {/if}>{$field.name}</option>
+				{/foreach}
+			</optgroup>
+			<optgroup label="{l s='Attributes' mod='nqgatewayneteven'}">
+				{foreach from=$SYNCHRO_PRODUCT_OTHER_FIELDS.attribute_fields item=field}
+					<option value="A¤{$field.id_attribute_group}" {if in_array($field.id_attribute_group, $SYNCHRO_PRODUCT_OTHER_FIELDS_A)}selected="selected" {/if}>{$field.name}</option>
+				{/foreach}
+			</optgroup>
+		</select>
+	</div>
+	<br/>
+
+
+
+	{foreach from=$t_fields key=field_name item=field}
+		<label>{$field_name|escape}</label>
+		<div class="margin-form">
+			<select class="{if $field.values_group == 'prices'}prices_select{/if}" name="SYNCHRO_PRODUCT_MATCH[{$field_name}]">
+				<option value="0">{$default_select_value|escape}</option>';
+				{if isset($t_values[$field.values_group])}
+					{foreach from=$t_values[$field.values_group] key=name item=value}
+						<option data-countryLinked="{if isset($value.categoryLinked) AND $value.categoryLinked}{$value.categoryLinked}{else}0{/if}" value="{$name}"{if $SYNCHRO_PRODUCT_MATCH[$field_name] AND $SYNCHRO_PRODUCT_MATCH[$field_name] == $name} selected="selected"{/if}>{$value.name|escape:'htmlall':'UTF-8'}</option>
+					{/foreach}
+				{/if}
+			</select>
+			{if $field.values_group == 'prices'}
+				<select name="SYNCHRO_PRODUCT_MATCH_COUNTRY[{$field_name}]" style="{if empty($SYNCHRO_PRODUCT_MATCH[$field_name]) OR !$t_values[$field.values_group][$SYNCHRO_PRODUCT_MATCH[$field_name]].categoryLinked}display: none;{/if}">
+					<option value="0">{$default_select_value|escape}</option>
+					{foreach from=$countries item=country}
+						<option value="{$country.id_country}" {if $SYNCHRO_PRODUCT_MATCH_COUNTRY[$field_name] AND $SYNCHRO_PRODUCT_MATCH_COUNTRY[$field_name] == $country.id_country} selected="selected"{/if}>{$country.name}</option>
+					{/foreach}
+				</select>
+			{/if}
+		</div>
+	{/foreach}
+
+	<br class="clear"/>
+	<label>{l s='Mapping fr' mod='nqgatewayneteven'}</label>
+	<div class="margin-form">
+		<select name="SYNCHRO_PRODUCT_LANG_FR">
+			<option value="0">{$default_select_value|escape}</option>
+			{foreach from=$languages item=language}
+				<option value="{$language.id_lang}" {if $SYNCHRO_PRODUCT_LANG.SYNCHRO_PRODUCT_LANG_FR == $language.id_lang}selected="selected"{/if} >{$language.name}</option>
+			{/foreach}
+		</select>
+
+		{assign "field_index" "SYNCHRO_PRODUCT_LANG_ACTIVE_FR"}
+		<input type="radio" name="{$field_index}" id="{$field_index}_on" value="1"{if $SYNCHRO_PRODUCT_LANG[$field_index]} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_on"> <img src="../img/admin/enabled.gif" alt="{l s='Oui' mod='nqgatewayneteven'}" title="{l s='Oui' mod='nqgatewayneteven'}" /></label>
+		<input type="radio" name="{$field_index}" id="{$field_index}_off" value="0"{if !$SYNCHRO_PRODUCT_LANG[$field_index]} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_off"> <img src="../img/admin/disabled.gif" alt="{l s='Non' mod='nqgatewayneteven'}" title="{l s='Non' mod='nqgatewayneteven'}" /></label>
+	</div>
+	<label>{l s='Mapping en' mod='nqgatewayneteven'}</label>
+	<div class="margin-form">
+		<select name="SYNCHRO_PRODUCT_LANG_EN">
+			<option value="0">{$default_select_value|escape}</option>
+			{foreach from=$languages item=language}
+				<option value="{$language.id_lang}" {if $SYNCHRO_PRODUCT_LANG.SYNCHRO_PRODUCT_LANG_EN == $language.id_lang}selected="selected"{/if} >{$language.name}</option>
+			{/foreach}
+		</select>
+
+		{assign "field_index" "SYNCHRO_PRODUCT_LANG_ACTIVE_EN"}
+		<input type="radio" name="{$field_index}" id="{$field_index}_on" value="1"{if $SYNCHRO_PRODUCT_LANG[$field_index]} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_on"> <img src="../img/admin/enabled.gif" alt="{l s='Oui' mod='nqgatewayneteven'}" title="{l s='Oui' mod='nqgatewayneteven'}" /></label>
+		<input type="radio" name="{$field_index}" id="{$field_index}_off" value="0"{if !$SYNCHRO_PRODUCT_LANG[$field_index]} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_off"> <img src="../img/admin/disabled.gif" alt="{l s='Non' mod='nqgatewayneteven'}" title="{l s='Non' mod='nqgatewayneteven'}" /></label>
+	</div>
+	<label>{l s='Mapping de' mod='nqgatewayneteven'}</label>
+	<div class="margin-form">
+		<select name="SYNCHRO_PRODUCT_LANG_DE">
+			<option value="0">{$default_select_value|escape}</option>
+			{foreach from=$languages item=language}
+				<option value="{$language.id_lang}" {if $SYNCHRO_PRODUCT_LANG.SYNCHRO_PRODUCT_LANG_DE == $language.id_lang}selected="selected"{/if} >{$language.name}</option>
+			{/foreach}
+		</select>
+
+		{assign "field_index" "SYNCHRO_PRODUCT_LANG_ACTIVE_DE"}
+		<input type="radio" name="{$field_index}" id="{$field_index}_on" value="1"{if $SYNCHRO_PRODUCT_LANG[$field_index]} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_on"> <img src="../img/admin/enabled.gif" alt="{l s='Oui' mod='nqgatewayneteven'}" title="{l s='Oui' mod='nqgatewayneteven'}" /></label>
+		<input type="radio" name="{$field_index}" id="{$field_index}_off" value="0"{if !$SYNCHRO_PRODUCT_LANG[$field_index]} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_off"> <img src="../img/admin/disabled.gif" alt="{l s='Non' mod='nqgatewayneteven'}" title="{l s='Non' mod='nqgatewayneteven'}" /></label>
+	</div>
+	<label>{l s='Mapping es' mod='nqgatewayneteven'}</label>
+	<div class="margin-form">
+		<select name="SYNCHRO_PRODUCT_LANG_ES">
+			<option value="0">{$default_select_value|escape}</option>
+			{foreach from=$languages item=language}
+				<option value="{$language.id_lang}" {if $SYNCHRO_PRODUCT_LANG.SYNCHRO_PRODUCT_LANG_ES == $language.id_lang}selected="selected"{/if} >{$language.name}</option>
+			{/foreach}
+		</select>
+
+		{assign "field_index" "SYNCHRO_PRODUCT_LANG_ACTIVE_ES"}
+		<input type="radio" name="{$field_index}" id="{$field_index}_on" value="1"{if $SYNCHRO_PRODUCT_LANG[$field_index]} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_on"> <img src="../img/admin/enabled.gif" alt="{l s='Oui' mod='nqgatewayneteven'}" title="{l s='Oui' mod='nqgatewayneteven'}" /></label>
+		<input type="radio" name="{$field_index}" id="{$field_index}_off" value="0"{if !$SYNCHRO_PRODUCT_LANG[$field_index]} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_off"> <img src="../img/admin/disabled.gif" alt="{l s='Non' mod='nqgatewayneteven'}" title="{l s='Non' mod='nqgatewayneteven'}" /></label>
+	</div>
+	<label>{l s='Mapping it' mod='nqgatewayneteven'}</label>
+	<div class="margin-form">
+		<select name="SYNCHRO_PRODUCT_LANG_IT">
+			<option value="0">{$default_select_value|escape}</option>
+			{foreach from=$languages item=language}
+				<option value="{$language.id_lang}" {if $SYNCHRO_PRODUCT_LANG.SYNCHRO_PRODUCT_LANG_IT == $language.id_lang}selected="selected"{/if} >{$language.name}</option>
+			{/foreach}
+		</select>
+
+		{assign "field_index" "SYNCHRO_PRODUCT_LANG_ACTIVE_IT"}
+		<input type="radio" name="{$field_index}" id="{$field_index}_on" value="1"{if $SYNCHRO_PRODUCT_LANG[$field_index]} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_on"> <img src="../img/admin/enabled.gif" alt="{l s='Oui' mod='nqgatewayneteven'}" title="{l s='Oui' mod='nqgatewayneteven'}" /></label>
+		<input type="radio" name="{$field_index}" id="{$field_index}_off" value="0"{if !$SYNCHRO_PRODUCT_LANG[$field_index]} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_off"> <img src="../img/admin/disabled.gif" alt="{l s='Non' mod='nqgatewayneteven'}" title="{l s='Non' mod='nqgatewayneteven'}" /></label>
+	</div>
+
+	<br class="clear" />
+	<center><input type="submit" name="submitSynchroProduct" value="{l s='Enregistrer' mod='nqgatewayneteven'}" class="button" /></center>
+</fieldset>
+
+{***********************************************************************}
+{*  Synchronisation du stock  *}
+{***********************************************************************}
+<fieldset style="margin-top: 15px;" >
+	<legend><img src="../img/admin/cog.gif" alt="{l s='Synchronisation du stock' mod='nqgatewayneteven'}" class="middle" />{l s='Synchronisation du stock' mod='nqgatewayneteven'}</legend>
+	<label>{l s='Actif' mod='nqgatewayneteven'}</label>
+	<div class="margin-form">
+		{assign "field_index" "SYNCHRONISATION_STOCK"}
+		<input type="radio" name="{$field_index}" id="{$field_index}_on" value="1"{if $SYNCHRONISATION_STOCK} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_on"> <img src="../img/admin/enabled.gif" alt="{l s='Oui' mod='nqgatewayneteven'}" title="{l s='Oui' mod='nqgatewayneteven'}" /></label>
+		<input type="radio" name="{$field_index}" id="{$field_index}_off" value="0"{if !$SYNCHRONISATION_STOCK} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_off"> <img src="../img/admin/disabled.gif" alt="{l s='Non' mod='nqgatewayneteven'}" title="{l s='Non' mod='nqgatewayneteven'}" /></label>
+		<br class="clear"/>
+		<a target="_blank" href="{$cron_stock_url|escape:'htmlall':'UTF-8'}&f=1"><input style="margin-top:10px;" type="button" value="{l s='Forcer la synchronisation du stock' mod='nqgatewayneteven'}"/></a>
+	</div>
+
+	<label>{l s='URL de synchronisation' mod='nqgatewayneteven'}</label>
+	<div class="margin-form">
+		<span >{$cron_stock_url|escape:'htmlall':'UTF-8'}</span>
+	</div>
+
+	<label>{l s='Exporter seulement les produit actif' mod='nqgatewayneteven'}</label>
+	<div class="margin-form">
+		{assign "field_index" "SYNCHRO_STOCK_ONLY_ACTIVE"}
+		<input type="radio" name="{$field_index}" id="{$field_index}_on" value="1"{if $SYNCHRO_STOCK_ONLY_ACTIVE} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_on"> <img src="../img/admin/enabled.gif" alt="{l s='Oui' mod='nqgatewayneteven'}" title="{l s='Oui' mod='nqgatewayneteven'}" /></label>
+		<input type="radio" name="{$field_index}" id="{$field_index}_off" value="0"{if !$SYNCHRO_STOCK_ONLY_ACTIVE} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_off"> <img src="../img/admin/disabled.gif" alt="{l s='Non' mod='nqgatewayneteven'}" title="{l s='Non' mod='nqgatewayneteven'}" /></label>
+	</div>
+
+	<br class="clear" />
+	<center><input type="submit" name="submitSynchroStock" value="{l s='Enregistrer' mod='nqgatewayneteven'}" class="button" /></center>
+</fieldset>
+
+
+{***********************************************************************}
+{*  Synchronisation des commandes *}
+{***********************************************************************}
+<fieldset style="margin-top: 15px;" >
+	<legend><img src="../img/admin/cog.gif" alt="{l s='Synchronisation des commandes' mod='nqgatewayneteven'}" class="middle" />{l s='Synchronisation des commandes' mod='nqgatewayneteven'}</legend>
+	<label>{l s='Synchronisation des commandes' mod='nqgatewayneteven'}</label>
+	<div class="margin-form">
+		<input type="radio" name="SYNCHRONISATION_ORDER" id="SYNCHRONISATION_ORDER_on" value="1"{if $SYNCHRONISATION_ORDER} checked="checked"{/if} />
+		<label class="t" for="SYNCHRONISATION_ORDER_on"> <img src="../img/admin/enabled.gif" alt="{l s='Oui' mod='nqgatewayneteven'}" title="{l s='Oui' mod='nqgatewayneteven'}" /></label>
+		<input type="radio" name="SYNCHRONISATION_ORDER" id="SYNCHRONISATION_ORDER_off" value="0"{if !$SYNCHRONISATION_ORDER} checked="checked"{/if} />
+		<label class="t" for="SYNCHRONISATION_ORDER_off"> <img src="../img/admin/disabled.gif" alt="{l s='Non' mod='nqgatewayneteven'}" title="{l s='Non' mod='nqgatewayneteven'}" /></label>
+		<br class="clear"/>
+		<a target="_blank" href="{$cron_order_url|escape:'htmlall':'UTF-8'}&f=1"><input style="margin-top:10px;" type="button" value="{l s='Forcer la synchonisation des commandes' mod='nqgatewayneteven'}"/></a>
+	</div>
+
+	<br />
+	<label>{l s='URL de synchronisation' mod='nqgatewayneteven'}</label>
+	<div class="margin-form">
+		<span >{$cron_order_url|escape:'htmlall':'UTF-8'}</span>
+	</div>
+
+	<div class="warning">
+		{l s='Ajouter des stauts de commandes avant ou après le statut de commande NetEven' mod='nqgatewayneteven'}<br />
+		{l s='Par exmemple, cela vous permet de passer directement une commande dans le statut en "Paiement accepté" ou "En cours de livraison" pour tous les commandes provenant de NetEven' mod='nqgatewayneteven'}
+	</div>
+	<br /><br />
+
+	<label>{l s='Ajouter des statuts définis avant' mod='nqgatewayneteven'}</label>
+	<div class="margin-form">
+		<input type="hidden" name="id_state_before" value=""/>
+		<select id="select_before" >
+			{foreach from=$order_states item=order_state}
+				{if $order_state.id_order_state != $ID_ORDER_STATE_NETEVEN}
+					<option value="{$order_state.id_order_state|intval}" >{$order_state.name|escape:'htmlall':'UTF-8'}</option>
+				{/if}
+			{/foreach}
+		</select>
+		<input type="button" class="button" value="{l s='Ajouter' mod='nqgatewayneteven'}" id="add_before"/>
+	</div>
+	<div id="state_before" style="margin-left:40px;">
+		<div>
+			<ul class="order_state_list"></ul>
+		</div>
+	</div><br /><br />
+
+	<label>{l s='Ajouter des statuts définis après' mod='nqgatewayneteven'}</label>
+	<div class="margin-form">
+		<input type="hidden" name="id_state_after" value=""/>
+		<select id="select_after" >';
+			{foreach from=$order_states item=order_state}
+				{if $order_state.id_order_state != $ID_ORDER_STATE_NETEVEN}
+					<option value="{$order_state.id_order_state|intval}" >{$order_state.name|escape:'htmlall':'UTF-8'}</option>
+				{/if}
+			{/foreach}
+		</select>
+		<input type="button" class="button" value="{l s='Ajouter' mod='nqgatewayneteven'}" id="add_after"/>
+	</div>
+	<div id="state_after" style="margin-left:40px;">
+		<div>
+			<ul class="order_state_list"></ul>
+		</div>
 	</div>
 
 	<br class="clear" />
 	<center><input type="submit" name="submitNetEven" value="{l s='Enregistrer' mod='nqgatewayneteven'}" class="button" /></center>
 </fieldset>
 
+{***********************************************************************}
+{*  Mapping statut commande Neteven -> Presta *}
+{***********************************************************************}
+<fieldset style="margin-top: 15px;">
+	<legend><img src="../img/admin/cog.gif" alt="" class="middle" />{l s='Mapping Neteven -> Prestashop' mod='nqgatewayneteven'}</legend>
+		{foreach from=$t_neteven_order_state key=name item=neteven_state}
+			<label>{$neteven_state.name|escape}</label>
+			<div class="margin-form">
+				{assign "neteven_state_index" $neteven_state.index}
+				{assign "field_index" "MAPPING_STATE_$neteven_state_index"}
+				<select name="{$field_index|escape}">
+					<option value="0">{$default_select_value|escape}</option>
+					{foreach from=$t_order_state item=order_state}
+						<option value="{$order_state.id_order_state}" {if $order_state.id_order_state == $neteven_state.config}selected="selected"{/if} >{$order_state.name}</option>
+					{/foreach}
+				</select>
+			</div>
+			<div class="clear"></div>
+		{/foreach}
+	<br class="clear" />
+	<center><input type="submit" name="submitMappingNetevenPresta" value="{l s='Enregistrer' mod='nqgatewayneteven'}" class="button" /></center>
+</fieldset>
+
+
+{***********************************************************************}
+{*  Mapping statut commande Presta -> Neteven *}
+{***********************************************************************}
+<fieldset style="margin-top: 15px;">
+	<legend><img src="../img/admin/cog.gif" alt="" class="middle" />{l s='Mapping Prestashop -> Neteven' mod='nqgatewayneteven'}</legend>
+
+	{foreach from=$t_order_state item=order_state}
+		<label>{$order_state.name|escape}</label>
+		<div class="margin-form">
+			{assign "order_state_id" $order_state.id_order_state}
+			{assign "field_index" "MAPPING_STATE_$order_state_id"}
+			<select name="{$field_index|escape}">
+				<option value="0">{$default_select_value|escape}</option>
+				{foreach from=$t_neteven_order_state key=name item=neteven_state}
+					{if $neteven_state.can_use}
+						<option value="{$name}" {if $order_state.neteven_state == $name}selected="selected"{/if} >{$name}</option>
+					{/if}
+				{/foreach}
+			</select>
+		</div>
+		<div class="clear"></div>
+	{/foreach}
+
+	<br class="clear" />
+	<center><input type="submit" name="submitMappingPrestaNeteven" value="{l s='Enregistrer' mod='nqgatewayneteven'}" class="button" /></center>
+</fieldset>
+
+{***********************************************************************}
+{*  Livraison  *}
+{***********************************************************************}
 <fieldset style="margin-top: 15px;" >
 	<legend><img src="../img/admin/cog.gif" alt="" class="middle" />{l s='Livraison' mod='nqgatewayneteven'}</legend>
-	<label>{l s='Informations sur la livraison' mod='nqgatewayneteven'}</label>
+	<label>{l s='Actif ' mod='nqgatewayneteven'}</label>
 	<div class="margin-form">
-		<input type="text" name="COMMENT" value="{$COMMENT|escape:'htmlall':'UTF-8'}" />
+		{assign "field_index" "ACTIVE_SHIPPING"}
+		<input type="radio" name="{$field_index}" id="{$field_index}_on" value="1"{if $ACTIVE_SHIPPING} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_on"> <img src="../img/admin/enabled.gif" alt="{l s='Oui' mod='nqgatewayneteven'}" title="{l s='Oui' mod='nqgatewayneteven'}" /></label>
+		<input type="radio" name="{$field_index}" id="{$field_index}_off" value="0"{if !$ACTIVE_SHIPPING} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_off"> <img src="../img/admin/disabled.gif" alt="{l s='Non' mod='nqgatewayneteven'}" title="{l s='Non' mod='nqgatewayneteven'}" /></label>
 	</div>
 	<label>{l s='Délai de livraison' mod='nqgatewayneteven'}</label>
 	<div class="margin-form">
 		<input type="text" name="SHIPPING_DELAY" value="{$SHIPPING_DELAY|intval}" /> <em>({l s='en jours' mod='nqgatewayneteven'})</em>
 	</div>
+
+	<label>{l s='Informations sur la livraison' mod='nqgatewayneteven'}</label>
+	{assign var='defaultFormLanguage' value=1}
+	{assign var='default_language' value='fr'}
+	<div class="margin-form">
+		<div class="translatable">
+			{foreach from=$languages item=language}
+				<div id="meta_title_{$language.id_lang|intval}" style=" float: left;"> {* display: {if $language.id_lang == $defaultFormLanguage}block{else}none{/if}; *}
+					<input size="40" type="text" id="COMMENT_LANG_{$language.id_lang|intval}" name="COMMENT_LANG_{$language.id_lang|intval}"
+					       value="{$COMMENT_LANG[$language.id_lang|intval]}" />
+					<img src="../img/l/{$language.id_lang|intval}.jpg" class="pointer" alt="{$language.name|escape}" title="{$language.name|escape}" />
+				</div>
+				<div class="clear"></div>
+			{/foreach}
+		</div>
+	</div>
+	<script type="text/javascript">
+		{literal}
+		$(document).ready(function(){
+			id_language = {/literal}{$defaultFormLanguage}{literal};
+			languages = new Array();
+			{/literal}{foreach from=$languages item=language name=langLoop}{literal}
+				languages[{/literal}{$smarty.foreach.langLoop.index}{literal}] = {
+					id_lang: '{/literal}{$language.id_lang}{literal}',
+					iso_code: '{/literal}{$language.iso_code}{literal}',
+					name: '{/literal}{$language.name}{literal}'
+				};
+			{/literal}{/foreach}{literal}
+			//displayFlags(languages, id_language, 0);
+		});
+		{/literal}
+	</script>
+	<br/>
+	<div class="clear"></div>
+
 	<label>{l s='Frais de livraison' mod='nqgatewayneteven'}</label>
 	<div class="margin-form">
 		<input type="text" name="SHIPPING_PRICE_LOCAL" value="{$SHIPPING_PRICE_LOCAL|floatval}" /> <em>({l s='en' mod='nqgatewayneteven'} {$default_currency->sign})</em>
@@ -208,52 +578,10 @@
 	<center><input type="submit" name="submitNetEvenShipping" value="{l s='Enregistrer' mod='nqgatewayneteven'}" class="button" /></center>
 </fieldset>
 
-<fieldset style="margin-top: 15px;">
-	<legend><img src="../img/admin/cog.gif" alt="" class="middle" />{l s='Statuts de commandes' mod='nqgatewayneteven'}</legend>
-	<div class="warning">
-	{l s='Ajouter des stauts de commandes avant ou après le statut de commande NetEven' mod='nqgatewayneteven'}<br />
-	{l s='Par exmemple, cela vous permet de passer directement une commande dans le statut en "Paiement accepté" ou "En cours de livraison" pour tous les commandes provenant de NetEven' mod='nqgatewayneteven'}
-	</div>
-	<br /><br />
-
-	<label>{l s='Ajouter des statuts définis avant' mod='nqgatewayneteven'}</label>
-	<div class="margin-form">
-		<input type="hidden" name="id_state_before" value=""/>
-		<select id="select_before" >
-		{foreach from=$order_states item=order_state}
-			{if $order_state.id_order_state != $ID_ORDER_STATE_NETEVEN}
-				<option value="{$order_state.id_order_state|intval}" >{$order_state.name|escape:'htmlall':'UTF-8'}</option>
-			{/if}
-		{/foreach}
-		</select>
-		<input type="button" class="button" value="{l s='Ajouter' mod='nqgatewayneteven'}" id="add_before"/>
-	</div>
-	<div id="state_before" style="margin-left:40px;">
-		<div>
-			<ul class="order_state_list"></ul>
-		</div>
-	</div><br /><br />
-
-	<label>{l s='Ajouter des statuts définis après' mod='nqgatewayneteven'}</label>
-	<div class="margin-form">
-		<input type="hidden" name="id_state_after" value=""/>
-		<select id="select_after" >';
-		{foreach from=$order_states item=order_state}
-			{if $order_state.id_order_state != $ID_ORDER_STATE_NETEVEN}
-				<option value="{$order_state.id_order_state|intval}" >{$order_state.name|escape:'htmlall':'UTF-8'}</option>
-			{/if}
-		{/foreach}
-		</select>
-		<input type="button" class="button" value="{l s='Ajouter' mod='nqgatewayneteven'}" id="add_after"/>
-	</div>
-	<div id="state_after" style="margin-left:40px;">
-		<div>
-			<ul class="order_state_list"></ul>
-		</div>
-	</div>
-</fieldset>
-
-<fieldset style="margin-top: 15px;" >
+{***********************************************************************}
+{*  Mapping features  *}
+{***********************************************************************}
+{*<fieldset style="margin-top: 15px;" >
 	<legend><img src="../img/admin/cog.gif" alt="" class="middle" />{l s='Liens entre les caractéristiques PrestaShop et NetEven' mod='nqgatewayneteven'}</legend>
 
 {if !$neteven_feature_categories}
@@ -309,8 +637,11 @@
 			<ul class="feature_links"></ul>
 		</div>
 	</div>
-</fieldset>
+</fieldset>*}
 
+{***********************************************************************}
+{*  Others fields  *}
+{***********************************************************************}
 <fieldset style="margin-top: 15px;">
 	<legend><img src="../img/admin/cog.gif" alt="" class="middle" />{l s='Champs supplémentaire personnalisés' mod='nqgatewayneteven'}</legend>
 	<a onclick="addCustomizableField()"><img src="../img/admin/add.gif" border="0"> {l s='Ajouter un champs' mod='nqgatewayneteven'}</a><br /><br />
@@ -342,10 +673,14 @@
 	<br class="clear" />
 	<center><input type="submit" name="submitCustomizableFeilds" value="{l s='Enregistrer' mod='nqgatewayneteven'}" class="button" /></center>
 </fieldset>
+
+{***********************************************************************}
+{*  Maintenance et Debug  *}
+{***********************************************************************}
 <fieldset style="margin-top: 15px;">
 	<legend><img src="../img/admin/cog.gif" alt="" class="middle" />{l s='Maintenance' mod='nqgatewayneteven'}</legend>
 
-	<label>{l s='URL NetEven' mod='nqgatewayneteven'}</label>
+	{*<label>{l s='URL NetEven' mod='nqgatewayneteven'}</label>
 	<div class="margin-form">
 		<input type="text" name="NETEVEN_URL" value="{$NETEVEN_URL|escape:'htmlall':'UTF-8'}" />
 	</div>
@@ -353,8 +688,17 @@
 	<div class="margin-form">
 		<input type="text" name="NETEVEN_NS" value="{$NETEVEN_NS|escape:'htmlall':'UTF-8'}" />
 	</div>
+	<br /><br />*}
 
-	<br /><br />
+	<label>{l s='Mode sand box' mod='nqgatewayneteven'}</label>
+	<div class="margin-form">
+		{assign "field_index" "SAND_BOX"}
+		<input type="radio" name="{$field_index}" id="{$field_index}_on" value="1"{if $SAND_BOX} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_on"> <img src="../img/admin/enabled.gif" alt="{l s='Oui' mod='nqgatewayneteven'}" title="{l s='Oui' mod='nqgatewayneteven'}" /></label>
+		<input type="radio" name="{$field_index}" id="{$field_index}_off" value="0"{if !$SAND_BOX} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape}_off"> <img src="../img/admin/disabled.gif" alt="{l s='Non' mod='nqgatewayneteven'}" title="{l s='Non' mod='nqgatewayneteven'}" /></label>
+	</div>
+
 	<label>{l s='Mode debug' mod='nqgatewayneteven'}</label>
 	<div class="margin-form">
 		<input type="radio" name="DEBUG" id="DEBUG_on" value="1"{if $DEBUG} checked="checked"{/if} />
