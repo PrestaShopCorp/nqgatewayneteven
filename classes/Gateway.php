@@ -210,7 +210,7 @@ class Gateway
 
 	public function checkConnexion()
 	{
-		$result = ($this->testConnection() == 'Accepted');
+		return ($this->testConnection() == 'Accepted');
 	}
 
 	public function getValue($name)

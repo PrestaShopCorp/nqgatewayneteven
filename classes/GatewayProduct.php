@@ -273,10 +273,11 @@ class GatewayProduct extends Gateway
 			 * Quantity
 			 */
 			$quantity = Product::getQuantity((int)$product['id_product'], !empty($product['id_product_attribute']) ? (int)$product['id_product_attribute'] : null);
-			if (!self::$product_export_oos && (int)$quantity <= 0)
+			if (!self::$product_export_oos && (int)$quantity <= 0) {
 				if (!Gateway::getConfig('SYNCHRO_PRODUCT_CHANGE_OOS'))
 					continue;
-			$quantity = 0;
+			    $quantity = 0;
+            }
 
 			if (self::$product_export_only_active && Gateway::getConfig('SYNCHRO_PRODUCT_CHANGE_ACTIVE') && (!$product['active'] || !$product['available_for_order']))
 				$quantity = 0;
