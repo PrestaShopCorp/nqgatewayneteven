@@ -147,10 +147,8 @@ class GatewayOrder extends Gateway
 				self::$synchro_order_current++;
 				$temp[$neteven_order->OrderID] = 2;
 
-                if(!empty(self::$synchro_order_total)){
-                    Gateway::setStepAjaxCron(2, 'Processed : '.(int)ceil((self::$synchro_order_current * 100) / self::$synchro_order_total).' % - Commande : '.self::$synchro_order_current.' / '.(int)self::$synchro_order_total, Tools::getValue('uniqkey'));
-                }
-
+				if (!empty(self::$synchro_order_total))
+					Gateway::setStepAjaxCron(2, 'Processed : '.(int)ceil((self::$synchro_order_current * 100) / self::$synchro_order_total).' % - Commande : '.self::$synchro_order_current.' / '.(int)self::$synchro_order_total, Tools::getValue('uniqkey'));
 			}
 		}
 
@@ -694,18 +692,16 @@ class GatewayOrder extends Gateway
 					$current_tax_name = $tax_manager->getTaxCalculator()->getTaxesName();
 				}
 
-                if ($neteven_order->Quantity)
-                {
-                    $price_product = ($neteven_order->Price->_ - (float)$neteven_order->VAT->_) / $neteven_order->Quantity;
-                    $price_product_ttc = ($neteven_order->Price->_) / $neteven_order->Quantity;
-                }
-                else
-                {
-				    $price_product = 0;
-                    $price_product_ttc = 0;
-                }
-
-
+				if ($neteven_order->Quantity)
+				{
+					$price_product = ($neteven_order->Price->_ - (float)$neteven_order->VAT->_) / $neteven_order->Quantity;
+					$price_product_ttc = ($neteven_order->Price->_) / $neteven_order->Quantity;
+				}
+				else
+				{
+					$price_product = 0;
+					$price_product_ttc = 0;
+				}
 
 				$order_detail = new OrderDetail();
 				$order_detail->id_order = $id_order;
@@ -810,8 +806,8 @@ class GatewayOrder extends Gateway
 					{
 						// add detail taxe for order //
 						$order = new Order((int)$id_order);
-                        if (Validate::isLoadedObject($order))
-                            $order_detail->updateTaxAmount($order);
+						if (Validate::isLoadedObject($order))
+							$order_detail->updateTaxAmount($order);
 
 					}
 				}

@@ -151,7 +151,7 @@ class Gateway
 		require_once(dirname(__FILE__).'/../nqgatewayneteven.php');
 		$nqgatewayneteven = new NqGatewayNeteven();
 
-        Gateway::$translations = $nqgatewayneteven->getL();
+		Gateway::$translations = $nqgatewayneteven->getL();
 	}
 
 	public static function getL($key)
@@ -454,7 +454,7 @@ class Gateway
 	 */
 	public static function getOthersProductFields()
 	{
-		$context =  Context::getContext();
+		$context = Context::getContext();
 		$t_fields = array();
 
 		/*
@@ -624,16 +624,13 @@ class Gateway
 	 */
 	protected function getCurrencyIsoForProduct($id_country)
 	{
-        $oCountry = new Country((int)$id_country);
-        $oCurrency = new Currency((int)$oCountry->id_currency);
+		$oCountry = new Country((int)$id_country);
+		$oCurrency = new Currency((int)$oCountry->id_currency);
 
-        if(!empty($oCurrency->iso_code)){
-            return $oCurrency->iso_code;
-        }else{
-            return '';
-        }
-
-
+		if (!empty($oCurrency->iso_code))
+		    return $oCurrency->iso_code;
+		else
+		    return '';
 	}
 
 	protected function getPriceHT($product)
