@@ -46,7 +46,7 @@ class NqGatewayNeteven extends Module
 
 		$this->tab = $tab_name;
 
-		$this->version = '3.0.2';
+		$this->version = '3.0.3';
 		$this->author = 'NetEven';
 
 		parent::__construct();
@@ -567,18 +567,8 @@ class NqGatewayNeteven extends Module
 		// Lists of attribute groups
 		$attribute_groups = AttributeGroup::getAttributesGroups((int)$this->context->cookie->id_lang);
 
-		$neteven_features = Db::getInstance()->ExecuteS('SELECT * FROM `'._DB_PREFIX_.'orders_gateway_feature`');
-		$neteven_feature_categories = array ();
-		foreach ($neteven_features as $neteven_feature)
-		{
-			if (!isset($neteven_feature_categories[$neteven_feature['category']]))
-				$neteven_feature_categories[$neteven_feature['category']] = array ();
-
-			$neteven_feature_categories[$neteven_feature['category']][] = $neteven_feature;
-		}
-
 		if ($this->getSOAP())
-			$this->html .= $this->displayForm($order_states, $features, $attribute_groups, $neteven_feature_categories);
+			$this->html .= $this->displayForm($order_states, $features, $attribute_groups, array());
 		else
 			$this->html .= $this->displayError($this->l('This module requires the SOAP extension to run'));
 

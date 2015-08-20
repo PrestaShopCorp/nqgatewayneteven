@@ -112,8 +112,8 @@ $_MODULE['<{nqgatewayneteven}prestashop>nqgatewayneteven_19bfef3140e9df9638d4a5a
 $_MODULE['<{nqgatewayneteven}prestashop>nqgatewayneteven_506ed10c722a2500f47e18058fcff4a4'] = 'Product image format';
 $_MODULE['<{nqgatewayneteven}prestashop>nqgatewayneteven_cfab1ba8c67c7c838db98d666f02a132'] = '--';
 $_MODULE['<{nqgatewayneteven}prestashop>nqgatewayneteven_5036542ca0e64c9945eb9008fd9ba0af'] = 'SKU type';
-$_MODULE['<{nqgatewayneteven}prestashop>nqgatewayneteven_b757855a502020ab1289cad4e561f564'] = 'reference';
-$_MODULE['<{nqgatewayneteven}prestashop>nqgatewayneteven_0dc9043e89571b60e61bc5bb92abce4a'] = 'product ID / variant ID';
+$_MODULE['<{nqgatewayneteven}prestashop>nqgatewayneteven_b757855a502020ab1289cad4e561f564'] = 'Reference';
+$_MODULE['<{nqgatewayneteven}prestashop>nqgatewayneteven_0dc9043e89571b60e61bc5bb92abce4a'] = 'Product ID / Variant ID';
 $_MODULE['<{nqgatewayneteven}prestashop>nqgatewayneteven_41be79ac2fc0e32fcce24a8e8cf84089'] = 'Attributes to synchronise';
 $_MODULE['<{nqgatewayneteven}prestashop>nqgatewayneteven_e30e2cb9aa296049a2d8ba40f41b7f8a'] = 'Product';
 $_MODULE['<{nqgatewayneteven}prestashop>nqgatewayneteven_98f770b0af18ca763421bac22b4b6805'] = 'Features';

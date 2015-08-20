@@ -103,29 +103,7 @@ class Gateway
 		$this->shipping_price_international = Gateway::getConfig('SHIPPING_PRICE_INTERNATIONAL');
 		$this->id_lang = (int)Configuration::get('PS_LANG_DEFAULT');
 
-		// Get feature links NetEven/PrestaShop
-		$feature_links = Db::getInstance()->executeS('
-            SELECT ogfl.*, agl.`name` as attribute_name, fl.`name` as feature_name, ogf.`value`
-            FROM `'._DB_PREFIX_.'orders_gateway_feature_link` ogfl
-            LEFT JOIN `'._DB_PREFIX_.'attribute_group_lang` agl
-                ON (agl.`id_attribute_group` = ogfl.`id_attribute_group` AND agl.`id_lang` = '.(int)$context->cookie->id_lang.')
-            LEFT JOIN `'._DB_PREFIX_.'feature_lang` fl
-                ON (fl.`id_feature` = ogfl.`id_feature` AND fl.`id_lang` = '.(int)$context->cookie->id_lang.')
-            LEFT JOIN `'._DB_PREFIX_.'orders_gateway_feature` ogf
-                ON (ogf.`id_order_gateway_feature` = ogfl.`id_order_gateway_feature`)
-        ');
-
-		$temp = array();
-		if (is_array($feature_links))
-		{
-			foreach ($feature_links as $feature_link)
-				if (!empty($feature_link['id_attribute_group']))
-					$temp[$feature_link['attribute_name']] = $feature_link['value'];
-				else
-					$temp[$feature_link['feature_name']] = $feature_link['value'];
-		}
-
-		$this->feature_links = $temp;
+		$this->feature_links = array();
 
 		/* Get order states */
 		if (Gateway::getConfig('ORDER_STATE_BEFORE'))
@@ -151,7 +129,7 @@ class Gateway
 		require_once(dirname(__FILE__).'/../nqgatewayneteven.php');
 		$nqgatewayneteven = new NqGatewayNeteven();
 
-        Gateway::$translations = $nqgatewayneteven->getL();
+		Gateway::$translations = $nqgatewayneteven->getL();
 	}
 
 	public static function getL($key)
@@ -454,7 +432,7 @@ class Gateway
 	 */
 	public static function getOthersProductFields()
 	{
-		$context =  Context::getContext();
+		$context = Context::getContext();
 		$t_fields = array();
 
 		/*
@@ -624,16 +602,13 @@ class Gateway
 	 */
 	protected function getCurrencyIsoForProduct($id_country)
 	{
-        $oCountry = new Country((int)$id_country);
-        $oCurrency = new Currency((int)$oCountry->id_currency);
+		$oCountry = new Country((int)$id_country);
+		$oCurrency = new Currency((int)$oCountry->id_currency);
 
-        if(!empty($oCurrency->iso_code)){
-            return $oCurrency->iso_code;
-        }else{
-            return '';
-        }
-
-
+		if (!empty($oCurrency->iso_code))
+		    return $oCurrency->iso_code;
+		else
+		    return '';
 	}
 
 	protected function getPriceHT($product)
