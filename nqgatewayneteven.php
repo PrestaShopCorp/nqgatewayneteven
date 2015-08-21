@@ -57,9 +57,12 @@ class NqGatewayNeteven extends Module
 		$this->use_ajax_cron = true;
 
 		$this->feature_url = '/script/set-neteven-categories.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME'));
-		$this->order_url = '/script/'.($this->use_ajax_cron ? 'ajax-' : '').'import-order.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME')).'&active=1';
-		$this->product_url = '/script/'.($this->use_ajax_cron ? 'ajax-' : '').'update-product.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME')).'&active=1';
-		$this->stock_url = '/script/'.($this->use_ajax_cron ? 'ajax-' : '').'update-stock.php?token='.Tools::encrypt(Configuration::get('PS_SHOP_NAME')).'&active=1';
+		$this->order_url = '/script/'.($this->use_ajax_cron ? 'ajax-' : '').'import-order.php?token='.
+			Tools::encrypt(Configuration::get('PS_SHOP_NAME')).'&active=1';
+		$this->product_url = '/script/'.($this->use_ajax_cron ? 'ajax-' : '').'update-product.php?token='.
+			Tools::encrypt(Configuration::get('PS_SHOP_NAME')).'&active=1';
+		$this->stock_url = '/script/'.($this->use_ajax_cron ? 'ajax-' : '').'update-stock.php?token='.
+			Tools::encrypt(Configuration::get('PS_SHOP_NAME')).'&active=1';
 
 		if (!$this->getSOAP())
 			$this->warning = $this->l('SOAP should be installed for this module');
@@ -78,7 +81,11 @@ class NqGatewayNeteven extends Module
 
 	public function install()
 	{
-		if (!parent::install() || !$this->registerHook('updateOrderStatus') || !$this->registerHook('updateCarrier') || !$this->installDB() || !$this->installConfig())
+		if (!parent::install()
+			|| !$this->registerHook('updateOrderStatus')
+			|| !$this->registerHook('updateCarrier')
+			|| !$this->installDB()
+			|| !$this->installConfig())
 			return false;
 
 		return true;
@@ -418,11 +425,11 @@ class NqGatewayNeteven extends Module
 				Gateway::updateConfig('TYPE_SKU', (string)Tools::getValue('TYPE_SKU'));
 
 				// Save Others fields to send //
-				$SYNCHRO_PRODUCT_OTHER_FIELDS = Tools::getValue('SYNCHRO_PRODUCT_OTHER_FIELDS');
+				$synchro_product_other_fields = Tools::getValue('SYNCHRO_PRODUCT_OTHER_FIELDS');
 				$t_fields = array ();
-				if (!empty($SYNCHRO_PRODUCT_OTHER_FIELDS))
+				if (!empty($synchro_product_other_fields))
 				{
-					foreach ($SYNCHRO_PRODUCT_OTHER_FIELDS as $field)
+					foreach ($synchro_product_other_fields as $field)
 					{
 						list($type, $value) = explode('¤', $field);
 
@@ -588,11 +595,12 @@ class NqGatewayNeteven extends Module
 
 		// Récupération des config pour la synchro produit.
 		list($t_values, $t_fields) = Gateway::getFieldsMatchTab();
+		$t_names = array_keys($t_fields);
 		$t_match_fields = array ();
-		foreach ($t_fields as $name => $value)
+		foreach ($t_names as $name)
 			$t_match_fields[$name] = Gateway::getConfig('SYNCHRO_PRODUCT_MATCH_'.$name);
 		$t_match_country_fields = array ();
-		foreach ($t_fields as $name => $value)
+		foreach ($t_names as $name)
 			$t_match_country_fields[$name] = Gateway::getConfig('SYNCHRO_PRODUCT_MATCH_COUNTRY_'.$name);
 
 		// Récupération des config pour la la synchro de langue.
@@ -618,8 +626,10 @@ class NqGatewayNeteven extends Module
 		$this->context->smarty->assign(array (
 			'SHIPPING_CARRIER_FRANCE' => Tools::safeOutput(Tools::getValue('SHIPPING_CARRIER_FRANCE', Gateway::getConfig('SHIPPING_CARRIER_FRANCE'))),
 			'SHIPPING_ZONE_FRANCE' => Tools::safeOutput(Tools::getValue('SHIPPING_ZONE_FRANCE', Gateway::getConfig('SHIPPING_ZONE_FRANCE'))),
-			'SHIPPING_CARRIER_INTERNATIONAL' => Tools::safeOutput(Tools::getValue('SHIPPING_CARRIER_INTERNATIONAL', Gateway::getConfig('SHIPPING_CARRIER_INTERNATIONAL'))),
-			'SHIPPING_ZONE_INTERNATIONAL' => Tools::safeOutput(Tools::getValue('SHIPPING_ZONE_INTERNATIONAL', Gateway::getConfig('SHIPPING_ZONE_INTERNATIONAL'))),
+			'SHIPPING_CARRIER_INTERNATIONAL' => Tools::safeOutput(Tools::getValue('SHIPPING_CARRIER_INTERNATIONAL',
+					Gateway::getConfig('SHIPPING_CARRIER_INTERNATIONAL'))),
+			'SHIPPING_ZONE_INTERNATIONAL' => Tools::safeOutput(Tools::getValue('SHIPPING_ZONE_INTERNATIONAL',
+					Gateway::getConfig('SHIPPING_ZONE_INTERNATIONAL'))),
 			'carriers' => $carriers,
 			'order_states' => $order_states,
 			'features' => $features,
@@ -635,9 +645,11 @@ class NqGatewayNeteven extends Module
 			'COMMENT' => Tools::safeOutput(Tools::getValue('COMMENT', Gateway::getConfig('COMMENT'))),
 			'COMMENT_LANG' => $t_comment_lang,
 			'SHIPPING_PRICE_LOCAL' => Tools::safeOutput(Tools::getValue('SHIPPING_PRICE_LOCAL', Gateway::getConfig('SHIPPING_PRICE_LOCAL'))),
-			'SHIPPING_PRICE_INTERNATIONAL' => Tools::safeOutput(Tools::getValue('SHIPPING_PRICE_INTERNATIONAL', Gateway::getConfig('SHIPPING_PRICE_INTERNATIONAL'))),
+			'SHIPPING_PRICE_INTERNATIONAL' => Tools::safeOutput(Tools::getValue('SHIPPING_PRICE_INTERNATIONAL',
+					Gateway::getConfig('SHIPPING_PRICE_INTERNATIONAL'))),
 			'SHIPPING_BY_PRODUCT' => (int)Gateway::getConfig('SHIPPING_BY_PRODUCT'),
-			'SHIPPING_BY_PRODUCT_FIELDNAME' => Tools::safeOutput(Tools::getValue('SHIPPING_BY_PRODUCT_FIELDNAME', Gateway::getConfig('SHIPPING_BY_PRODUCT_FIELDNAME'))),
+			'SHIPPING_BY_PRODUCT_FIELDNAME' => Tools::safeOutput(Tools::getValue('SHIPPING_BY_PRODUCT_FIELDNAME',
+					Gateway::getConfig('SHIPPING_BY_PRODUCT_FIELDNAME'))),
 			'ID_ORDER_STATE_NETEVEN' => (int)Gateway::getConfig('ID_ORDER_STATE_NETEVEN'),
 			'NETEVEN_URL' => Tools::safeOutput(Tools::getValue('NETEVEN_URL', Gateway::getConfig('NETEVEN_URL'))),
 			'NETEVEN_NS' => Tools::safeOutput(Tools::getValue('NETEVEN_NS', Gateway::getConfig('NETEVEN_NS'))),
@@ -723,8 +735,10 @@ class NqGatewayNeteven extends Module
 			'Treatment mode' => $this->l('Treatment mode'),
 			'Display mode' => $this->l('Display mode'),
 			'Quantity of recovered product' => $this->l('Quantity of recovered product'),
-			'Quantity of recovered product after remove products without EAN code' => $this->l('Quantity of recovered product after remove products without EAN code'),
-			'Problem with a secure key recovery for the customer / NetEven Order Id' => $this->l('Problem with a secure key recovery for the customer / NetEven Order Id'),
+			'Quantity of recovered product after remove products without EAN code' =>
+				$this->l('Quantity of recovered product after remove products without EAN code'),
+			'Problem with a secure key recovery for the customer / NetEven Order Id' =>
+				$this->l('Problem with a secure key recovery for the customer / NetEven Order Id'),
 			'Failed for cart creation / NetEven Order Id' => $this->l('Failed for cart creation / NetEven Order Id'),
 			'Failed for order creation / NetEven Order Id' => $this->l('Failed for order creation / NetEven Order Id'),
 			'Add order Id' => $this->l('Add order Id'),

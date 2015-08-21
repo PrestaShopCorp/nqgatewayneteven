@@ -88,8 +88,6 @@ class Gateway
 
 	public function affectProperties()
 	{
-		$context = Context::getContext();
-
 		// Get the configuration
 		$this->shipping_delay = Gateway::getConfig('SHIPPING_DELAY');
 		$this->comment = Gateway::getConfig('COMMENT');
@@ -183,7 +181,7 @@ class Gateway
 		if (!is_null($message))
 			return $message;
 
-		return;
+		return '';
 	}
 
 	public function checkConnexion()
@@ -264,17 +262,22 @@ class Gateway
 		{
 			if (Validate::isEmail($email))
 			{
+				$id_lang = $this->id_lang ? (int)$this->id_lang : Configuration::get('PS_LANG_DEFAULT');
+				$shop_name = Configuration::get('PS_SHOP_NAME');
+
 				if (!$classic_mail)
 				{
-					$id_lang = $this->id_lang ? (int)$this->id_lang : Configuration::get('PS_LANG_DEFAULT');
 					$shop_email = Configuration::get('PS_SHOP_EMAIL');
-					$shop_name = Configuration::get('PS_SHOP_NAME');
 					Mail::Send($id_lang, 'debug', $subject, array(
 						'{message}' => $message
 					), $email, null, $shop_email, $shop_name, null, null, dirname(__FILE__).'/../mails/');
 				}
 				else
-					mail($email, $subject, $message);
+				{
+					Mail::Send($id_lang, 'debug', $subject, array(
+						'{message}' => $message
+					), $email, null, $email, $shop_name, null, null, dirname(__FILE__).'/../mails/');
+				}
 
 				if ($this->getValue('debug'))
 					Toolbox::displayDebugMessage(Gateway::getL('Send email to').' : '.$email);
@@ -602,18 +605,19 @@ class Gateway
 	 */
 	protected function getCurrencyIsoForProduct($id_country)
 	{
-		$oCountry = new Country((int)$id_country);
-		$oCurrency = new Currency((int)$oCountry->id_currency);
+		$o_country = new Country((int)$id_country);
+		$o_currency = new Currency((int)$o_country->id_currency);
 
-		if (!empty($oCurrency->iso_code))
-		    return $oCurrency->iso_code;
+		if (!empty($o_currency->iso_code))
+			return $o_currency->iso_code;
 		else
-		    return '';
+			return '';
 	}
 
 	protected function getPriceHT($product)
 	{
-		return Product::getPriceStatic((int)$product['id_product'], false, (int)$product['id_product_attribute'], 2, null, false, true, 1, false, null, null);
+		return Product::getPriceStatic((int)$product['id_product'], false, (int)$product['id_product_attribute'], 2,
+			null, false, true, 1, false, null, null);
 	}
 
 	protected function getPriceTTC($product)
@@ -623,21 +627,23 @@ class Gateway
 		if (version_compare(_PS_VERSION_, '1.4', '>=') && version_compare(_PS_VERSION_, '1.5', '<'))
 		{
 			global $cookie;
-			$oAddress = new Address($id_address);
-			$oCountry = new Country($oAddress->id_country);
-			$cookie->id_currency = $oCountry->id_currency;
+			$o_address = new Address($id_address);
+			$o_country = new Country($o_address->id_country);
+			$cookie->id_currency = $o_country->id_currency;
 
-			return Product::getPriceStatic((int)$product['id_product'], true, (int)$product['id_product_attribute'], 2, null, false, true, 1, false, null, null, $id_address);
+			return Product::getPriceStatic((int)$product['id_product'], true, (int)$product['id_product_attribute'], 2,
+				null, false, true, 1, false, null, null, $id_address);
 		}
 		else
 		{
 			$useless = array();
-			$currentContext = Context::getContext();
-			$oAddress = new Address($id_address);
-			$oCountry = new Country($oAddress->id_country);
-			$currentContext->currency = new Currency($oCountry->id_currency);
+			$current_context = Context::getContext();
+			$o_address = new Address($id_address);
+			$o_country = new Country($o_address->id_country);
+			$current_context->currency = new Currency($o_country->id_currency);
 
-			return Product::getPriceStatic((int)$product['id_product'], true, (int)$product['id_product_attribute'], 2, null, false, true, 1, false, null, null, $id_address, $useless, true, true, $currentContext);
+			return Product::getPriceStatic((int)$product['id_product'], true, (int)$product['id_product_attribute'], 2,
+				null, false, true, 1, false, null, null, $id_address, $useless, true, true, $current_context);
 		}
 	}
 
@@ -648,21 +654,23 @@ class Gateway
 		if (version_compare(_PS_VERSION_, '1.4', '>=') && version_compare(_PS_VERSION_, '1.5', '<'))
 		{
 			global $cookie;
-			$oAddress = new Address($id_address);
-			$oCountry = new Country($oAddress->id_country);
-			$cookie->id_currency = $oCountry->id_currency;
+			$o_address = new Address($id_address);
+			$o_country = new Country($o_address->id_country);
+			$cookie->id_currency = $o_country->id_currency;
 
-			return Product::getPriceStatic((int)$product['id_product'], true, (int)$product['id_product_attribute'], 2, null, false, false, 1, false, null, null, $id_address);
+			return Product::getPriceStatic((int)$product['id_product'], true, (int)$product['id_product_attribute'], 2,
+				null, false, false, 1, false, null, null, $id_address);
 		}
 		else
 		{
 			$useless = array();
-			$currentContext = Context::getContext();
-			$oAddress = new Address($id_address);
-			$oCountry = new Country($oAddress->id_country);
-			$currentContext->currency = new Currency($oCountry->id_currency);
+			$current_context = Context::getContext();
+			$o_address = new Address($id_address);
+			$o_country = new Country($o_address->id_country);
+			$current_context->currency = new Currency($o_country->id_currency);
 
-			return Product::getPriceStatic((int)$product['id_product'], true, (int)$product['id_product_attribute'], 2, null, false, false, 1, false, null, null, $id_address, $useless, true, true, $currentContext);
+			return Product::getPriceStatic((int)$product['id_product'], true, (int)$product['id_product_attribute'], 2,
+				null, false, false, 1, false, null, null, $id_address, $useless, true, true, $current_context);
 		}
 	}
 
@@ -683,7 +691,8 @@ class Gateway
 
 	public static function getAddressByCountry($id_country)
 	{
-		return (int)Db::getInstance()->getValue('SELECT id_address FROM '._DB_PREFIX_.'address WHERE alias = "adr gen neteven" AND id_country = '.(int)$id_country);
+		return (int)Db::getInstance()->getValue('SELECT id_address FROM '._DB_PREFIX_.'address
+		WHERE alias = "adr gen neteven" AND id_country = '.(int)$id_country);
 	}
 
 

@@ -205,11 +205,11 @@
 	{foreach from=$t_fields key=field_name item=field}
 		<label>{$field_name|escape:'htmlall':'UTF-8'}</label>
 		<div class="margin-form">
-			<select class="{if $field.values_group == 'prices'}prices_select{/if}" name="SYNCHRO_PRODUCT_MATCH[{$field_name}]">
+			<select class="{if $field.values_group == 'prices'}prices_select{/if}" name="SYNCHRO_PRODUCT_MATCH[{$field_name|escape:'htmlall':'UTF-8'}]">
 				<option value="0">{$default_select_value|escape:'htmlall':'UTF-8'}</option>';
 				{if isset($t_values[$field.values_group])}
 					{foreach from=$t_values[$field.values_group] key=name item=value}
-						<option data-countryLinked="{if isset($value.categoryLinked) AND $value.categoryLinked}{$value.categoryLinked}{else}0{/if}" value="{$name}"{if $SYNCHRO_PRODUCT_MATCH[$field_name] AND $SYNCHRO_PRODUCT_MATCH[$field_name] == $name} selected="selected"{/if}>{$value.name|escape:'htmlall':'UTF-8'}</option>
+						<option data-countryLinked="{if isset($value.categoryLinked) AND $value.categoryLinked}{$value.categoryLinked|escape:'htmlall':'UTF-8'}{else}0{/if}" value="{$name|escape:'htmlall':'UTF-8'}"{if $SYNCHRO_PRODUCT_MATCH[$field_name] AND $SYNCHRO_PRODUCT_MATCH[$field_name] == $name} selected="selected"{/if}>{$value.name|escape:'htmlall':'UTF-8'}</option>
 					{/foreach}
 				{/if}
 			</select>
@@ -228,7 +228,7 @@
 	<label>{l s='Mapping fr' mod='nqgatewayneteven'}</label>
 	<div class="margin-form">
 		<select name="SYNCHRO_PRODUCT_LANG_FR">
-			<option value="0">{$default_select_value|escape}</option>
+			<option value="0">{$default_select_value|escape:'htmlall':'UTF-8'}</option>
 			{foreach from=$languages item=language}
 				<option value="{$language.id_lang|intval}" {if $SYNCHRO_PRODUCT_LANG.SYNCHRO_PRODUCT_LANG_FR == $language.id_lang}selected="selected"{/if} >{$language.name|escape:'htmlall':'UTF-8'}</option>
 			{/foreach}
@@ -243,7 +243,7 @@
 	<label>{l s='Mapping en' mod='nqgatewayneteven'}</label>
 	<div class="margin-form">
 		<select name="SYNCHRO_PRODUCT_LANG_EN">
-			<option value="0">{$default_select_value|escape}</option>
+			<option value="0">{$default_select_value|escape:'htmlall':'UTF-8'}</option>
 			{foreach from=$languages item=language}
 				<option value="{$language.id_lang|intval}" {if $SYNCHRO_PRODUCT_LANG.SYNCHRO_PRODUCT_LANG_EN == $language.id_lang}selected="selected"{/if} >{$language.name|escape:'htmlall':'UTF-8'}</option>
 			{/foreach}
@@ -258,7 +258,7 @@
 	<label>{l s='Mapping de' mod='nqgatewayneteven'}</label>
 	<div class="margin-form">
 		<select name="SYNCHRO_PRODUCT_LANG_DE">
-			<option value="0">{$default_select_value|escape}</option>
+			<option value="0">{$default_select_value|escape:'htmlall':'UTF-8'}</option>
 			{foreach from=$languages item=language}
 				<option value="{$language.id_lang|intval}" {if $SYNCHRO_PRODUCT_LANG.SYNCHRO_PRODUCT_LANG_DE == $language.id_lang}selected="selected"{/if} >{$language.name|escape:'htmlall':'UTF-8'}</option>
 			{/foreach}
@@ -273,7 +273,7 @@
 	<label>{l s='Mapping es' mod='nqgatewayneteven'}</label>
 	<div class="margin-form">
 		<select name="SYNCHRO_PRODUCT_LANG_ES">
-			<option value="0">{$default_select_value|escape}</option>
+			<option value="0">{$default_select_value|escape:'htmlall':'UTF-8'}</option>
 			{foreach from=$languages item=language}
 				<option value="{$language.id_lang|intval}" {if $SYNCHRO_PRODUCT_LANG.SYNCHRO_PRODUCT_LANG_ES == $language.id_lang}selected="selected"{/if} >{$language.name|escape:'htmlall':'UTF-8'}</option>
 			{/foreach}
@@ -288,7 +288,7 @@
 	<label>{l s='Mapping it' mod='nqgatewayneteven'}</label>
 	<div class="margin-form">
 		<select name="SYNCHRO_PRODUCT_LANG_IT">
-			<option value="0">{$default_select_value|escape}</option>
+			<option value="0">{$default_select_value|escape:'htmlall':'UTF-8'}</option>
 			{foreach from=$languages item=language}
 				<option value="{$language.id_lang|intval}" {if $SYNCHRO_PRODUCT_LANG.SYNCHRO_PRODUCT_LANG_IT == $language.id_lang}selected="selected"{/if} >{$language.name|escape:'htmlall':'UTF-8'}</option>
 			{/foreach}
@@ -497,7 +497,7 @@
 			id_language = {/literal}{$defaultFormLanguage|intval}{literal};
 			languages = new Array();
 			{/literal}{foreach from=$languages item=language name=langLoop}{literal}
-				languages[{/literal}{$smarty.foreach.langLoop.index}{literal}] = {
+				languages[{/literal}{$smarty.foreach.langLoop.index|intval}{literal}] = {
 					id_lang: '{/literal}{$language.id_lang|intval}{literal}',
 					iso_code: '{/literal}{$language.iso_code|escape:'htmlall':'UTF-8'}{literal}',
 					name: '{/literal}{$language.name|escape:'htmlall':'UTF-8'}{literal}'
@@ -512,7 +512,7 @@
 
 	<label>{l s='Frais de livraison' mod='nqgatewayneteven'}</label>
 	<div class="margin-form">
-		<input type="text" name="SHIPPING_PRICE_LOCAL" value="{$SHIPPING_PRICE_LOCAL|floatval}" /> <em>({l s='en' mod='nqgatewayneteven'} {$default_currency->sign})</em>
+		<input type="text" name="SHIPPING_PRICE_LOCAL" value="{$SHIPPING_PRICE_LOCAL|floatval}" /> <em>({l s='en' mod='nqgatewayneteven'} {$default_currency->sign|escape:'htmlall':'UTF-8'})</em>
 	</div>
 	<label>{l s='Frais de livraison à l\'international' mod='nqgatewayneteven'}</label>
 	<div class="margin-form">

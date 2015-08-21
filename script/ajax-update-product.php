@@ -60,7 +60,8 @@ if (Tools::getValue('token') != Tools::encrypt(Configuration::get('PS_SHOP_NAME'
 	function start() {
 		$("#centerBlock").append('<tr><td>Début de l’exécution, merci de patienter…</td></tr>');
 		if (!active) {
-			$("#centerBlock").append('<tr><td style="background: #ff7271">Attention le flux est en mode affichage, aucune donnée ne sera modifié.</td></tr>');
+			$("#centerBlock").append(
+				'<tr><td style="background: #ff7271">Attention le flux est en mode affichage, aucune donnée ne sera modifié.</td></tr>');
 		}
 		$("#centerBlock").append('<tr><td style="background: #f3db2e">Attention : ne pas fermer cette fenêtre pendant l’exécution</td></tr>');
 		$.ajax({
@@ -93,7 +94,8 @@ if (Tools::getValue('token') != Tools::encrypt(Configuration::get('PS_SHOP_NAME'
 				}
 				else /*if(step < jsonData.step)*/ {
 					step = jsonData.step;
-					$("#centerBlock").append('<tr><td style="background: #f3db2e" id="step_' + step + '" style="border: solid 1px gray;">' + jsonData.message + '</td></tr>')
+					$("#centerBlock").append('<tr><td style="background: #f3db2e" id="step_' + step +
+						'" style="border: solid 1px gray;">' + jsonData.message + '</td></tr>')
 				}
 
 				if (clean) {

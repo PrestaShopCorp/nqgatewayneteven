@@ -152,11 +152,6 @@ class GatewayProduct extends Gateway
 	{
 		$context = Context::getContext();
 
-		if ($this->getValue('debug'))
-			$neteven_date_export_product = '';
-		else
-			$neteven_date_export_product = Configuration::get('neteven_date_export_product');
-
 		$separator = $this->getValue('separator');
 
 		$id_lang = isset($context->cookie->id_lang) ? (int)$context->cookie->id_lang : (int)Configuration::get('PS_LANG_DEFAULT');
@@ -193,8 +188,10 @@ class GatewayProduct extends Gateway
 			p.`weight`,
 			pa.`weight` as weight_product_attribute,
 			GROUP_CONCAT(distinct CONCAT(agl.`name`," {##} ",al.`name`) SEPARATOR "'.pSQL($separator).' ") as attribute_name
-			'.((self::$type_sku != 'reference') ? ',(SELECT CONCAT(\'D\', pa2.`id_product_attribute`) FROM `'._DB_PREFIX_.'product_attribute` pa2 WHERE pa2.`id_product` = p.`id_product` AND `default_on` = 1 LIMIT 1) as declinaison_default' : '').'
-				'.((self::$type_sku == 'reference') ? ',(SELECT pa2.`reference` FROM `'._DB_PREFIX_.'product_attribute` pa2 WHERE pa2.`id_product` = p.`id_product` AND `default_on` = 1 LIMIT 1) as declinaison_default_ref' : '').'
+			'.((self::$type_sku != 'reference') ? ',(SELECT CONCAT(\'D\', pa2.`id_product_attribute`) FROM `'._DB_PREFIX_.'product_attribute` pa2
+				WHERE pa2.`id_product` = p.`id_product` AND `default_on` = 1 LIMIT 1) as declinaison_default' : '').'
+			'.((self::$type_sku == 'reference') ? ',(SELECT pa2.`reference` FROM `'._DB_PREFIX_.'product_attribute` pa2
+				WHERE pa2.`id_product` = p.`id_product` AND `default_on` = 1 LIMIT 1) as declinaison_default_ref' : '').'
 		FROM `'._DB_PREFIX_.'product` p
 		LEFT JOIN `'._DB_PREFIX_.'product_lang` pl ON (pl.`id_product` = p.`id_product` AND pl.`id_lang` = '.(int)$id_lang.')
 		LEFT JOIN `'._DB_PREFIX_.'manufacturer` m ON (m.`id_manufacturer` = p.`id_manufacturer`)
@@ -205,8 +202,10 @@ class GatewayProduct extends Gateway
 		LEFT JOIN `'._DB_PREFIX_.'attribute_lang` al ON (al.`id_attribute`=a.`id_attribute` AND al.`id_lang`='.(int)$id_lang.')
 		LEFT JOIN `'._DB_PREFIX_.'attribute_group_lang` agl ON (agl.`id_attribute_group`=a.`id_attribute_group` AND agl.`id_lang`='.(int)$id_lang.')
 		LEFT JOIN `'._DB_PREFIX_.'orders_gateway_inactive_product` ip ON (ip.id_product = p.id_product)
-		WHERE 1 '.((self::$product_export_only_active && !Gateway::getConfig('SYNCHRO_PRODUCT_CHANGE_ACTIVE')) ? ' AND ((p.`active` = 1 AND p.`available_for_order` = 1 ) OR ip.id_product IS NOT NULL)' : '').'
-		'.((is_array($products_exlusion) && count($products_exlusion) > 0) ? ' AND (p.`reference` NOT IN ('.implode(',', pSQL($products_exlusion)).') AND pa.`reference` NOT IN ('.implode(',', pSQL($products_exlusion)).'))' : '');
+		WHERE 1 '.((self::$product_export_only_active && !Gateway::getConfig('SYNCHRO_PRODUCT_CHANGE_ACTIVE')) ? '
+		AND ((p.`active` = 1 AND p.`available_for_order` = 1 ) OR ip.id_product IS NOT NULL)' : '').'
+		'.((is_array($products_exlusion) && count($products_exlusion) > 0) ? ' AND (p.`reference` NOT IN ('.implode(',', pSQL($products_exlusion)).')
+		AND pa.`reference` NOT IN ('.implode(',', pSQL($products_exlusion)).'))' : '');
 
 		$sql .= '
 		GROUP BY p.`id_product`, pa.`id_product_attribute`
@@ -249,12 +248,11 @@ class GatewayProduct extends Gateway
 
 		$products_temp = array();
 
-		$compteur_product_no_ean13 = 0;
-		$compteur_product_no_ref = 0;
 		foreach ($products as $product)
 		{
 			self::$synchro_product_current++;
-			Gateway::setStepAjaxCron(2, 'Processed : '.(int)ceil((self::$synchro_product_current * 100) / self::$synchro_product_total).' % - lot en cours : '.self::$synchro_product_lot.' / '.(int)self::$synchro_product_lot_total, Tools::getValue('uniqkey'));
+			Gateway::setStepAjaxCron(2, 'Processed : '.(int)ceil((self::$synchro_product_current * 100) / self::$synchro_product_total).
+				' % - lot en cours : '.self::$synchro_product_lot.' / '.(int)self::$synchro_product_lot_total, Tools::getValue('uniqkey'));
 
 			/*
 			 * GET NETEVEN LANGUAGES
@@ -272,15 +270,17 @@ class GatewayProduct extends Gateway
 			/*
 			 * Quantity
 			 */
-			$quantity = Product::getQuantity((int)$product['id_product'], !empty($product['id_product_attribute']) ? (int)$product['id_product_attribute'] : null);
+			$quantity = Product::getQuantity((int)$product['id_product'],
+				!empty($product['id_product_attribute']) ? (int)$product['id_product_attribute'] : null);
 			if (!self::$product_export_oos && (int)$quantity <= 0)
 			{
 				if (!Gateway::getConfig('SYNCHRO_PRODUCT_CHANGE_OOS'))
 					continue;
 				$quantity = 0;
-            }
+			}
 
-			if (self::$product_export_only_active && Gateway::getConfig('SYNCHRO_PRODUCT_CHANGE_ACTIVE') && (!$product['active'] || !$product['available_for_order']))
+			if (self::$product_export_only_active && Gateway::getConfig('SYNCHRO_PRODUCT_CHANGE_ACTIVE')
+				&& (!$product['active'] || !$product['available_for_order']))
 				$quantity = 0;
 
 			if (!empty($product['id_product_inactive']))
@@ -298,21 +298,15 @@ class GatewayProduct extends Gateway
 				$product_reference = $product['product_reference'];
 				if (!empty($product['id_product_attribute']))
 					$product_reference = $product['product_attribute_reference'];
-
 			}
 
 			/*
 			 * Code EAN
 			 */
 			$ean_ps = !empty($product['ean13_declinaison']) ? $product['ean13_declinaison'] : $product['ean13'];
-			$codeEan = '';
+			$code_ean = '';
 			if (!empty($ean_ps))
-				$codeEan = sprintf('%013s', $ean_ps);
-
-			/*
-			 * Code UPC
-			 */
-			$code_upc = !empty($product['upc_declinaison']) ? $product['upc_declinaison'] : $product['upc'];
+				$code_ean = sprintf('%013s', $ean_ps);
 
 			/*
 			 * Attribute ID
@@ -408,7 +402,7 @@ class GatewayProduct extends Gateway
 							//-------------------------
 							//- Identifier produit
 							case 'ean13' :
-								$content = $codeEan;
+								$content = $code_ean;
 								break;
 							case 'upc' :
 								$content = '';
@@ -454,7 +448,8 @@ class GatewayProduct extends Gateway
 				$carrier_zone_france = $this->getConfig('SHIPPING_ZONE_FRANCE');
 
 				if (!empty($carrier_france) && !empty($carrier_zone_france))
-					$products_temp[$indice]['PriceShippingLocal1'] = $this->getShippingPrice($product['id_product'], $id_product_attribute, $carrier_france, $carrier_zone_france);
+					$products_temp[$indice]['PriceShippingLocal1'] = $this->getShippingPrice($product['id_product'], $id_product_attribute,
+						$carrier_france, $carrier_zone_france);
 				elseif (!empty($shipping_price_local))
 					$products_temp[$indice]['PriceShippingLocal1'] = $shipping_price_local;
 
@@ -463,12 +458,14 @@ class GatewayProduct extends Gateway
 				$carrier_zone_inter = $this->getConfig('SHIPPING_ZONE_INTERNATIONAL');
 
 				if (!empty($carrier_france) && !empty($carrier_zone_france))
-					$products_temp[$indice]['PriceShippingInt1'] = $this->getShippingPrice($product['id_product'], $id_product_attribute, $carrier_inter, $carrier_zone_inter);
+					$products_temp[$indice]['PriceShippingInt1'] = $this->getShippingPrice($product['id_product'], $id_product_attribute,
+						$carrier_inter, $carrier_zone_inter);
 				elseif (!empty($shipping_price_inter))
 					$products_temp[$indice]['PriceShippingInt1'] = $shipping_price_inter;
 
 				if (!empty($carrier_france) && !empty($carrier_zone_france))
-					$products_temp[$indice]['PriceShippingInt1'] = $this->getShippingPrice($product['id_product'], $id_product_attribute, $carrier_inter, $carrier_zone_inter);
+					$products_temp[$indice]['PriceShippingInt1'] = $this->getShippingPrice($product['id_product'], $id_product_attribute,
+						$carrier_inter, $carrier_zone_inter);
 			}
 
 			/*
@@ -479,7 +476,8 @@ class GatewayProduct extends Gateway
 			{
 				if (is_object($link))
 				{
-					$img_url = $link->getImageLink($product['link_rewrite'], (int)$product['id_product'].'-'.(int)$image['id_image'], Gateway::getConfig('IMAGE_TYPE_NAME'));
+					$img_url = $link->getImageLink($product['link_rewrite'], (int)$product['id_product'].'-'.(int)$image['id_image'],
+						Gateway::getConfig('IMAGE_TYPE_NAME'));
 					$products_temp[$indice]['Image'.($key + 1)] = 'http://'.str_replace('http://', '', $img_url);
 				}
 			}
@@ -589,8 +587,8 @@ class GatewayProduct extends Gateway
 			{
 				$sql = 'SELECT t.name
 						FROM '._DB_PREFIX_.'product_tag pt
-						INNER JOIN '._DB_PREFIX_.'tag t ON (pt.id_tag = t.id_tag AND t.id_lang = '.(int)($id_lang).')
-						WHERE pt.id_product = '.(int)($product['id_product']);
+						INNER JOIN '._DB_PREFIX_.'tag t ON (pt.id_tag = t.id_tag AND t.id_lang = '.(int)$id_lang.')
+						WHERE pt.id_product = '.(int)$product['id_product'];
 				$t_tags_bdd = Db::getInstance()->ExecuteS($sql);
 
 				if ($t_tags_bdd && count($t_tags_bdd) > 0)
@@ -643,7 +641,7 @@ class GatewayProduct extends Gateway
 			 */
 			if ((int)$product['id_product_attribute'] > 0)
 			{
-				$selected_attributes = explode('¤', Gateway::getConfig('SYNCHRO_PRODUCT_OTHER_FIELDS_A'));
+				/*$selected_attributes = explode('¤', Gateway::getConfig('SYNCHRO_PRODUCT_OTHER_FIELDS_A'));*/
 				$results = Db::getInstance()->Executes('
 					SELECT
 						pac.id_attribute, agl.id_lang, agl.name as name, al.name as value
@@ -674,6 +672,9 @@ class GatewayProduct extends Gateway
 			}
 
 		}
+
+		if ($display == true)
+			echo 'trace';
 
 		return $products_temp;
 	}
@@ -719,7 +720,7 @@ class GatewayProduct extends Gateway
 	public function getProductCategories($product)
 	{
 		$context = Context::getContext();
-		$category = $category_default = new Category((int)$product['id_category_default'], (int)$context->cookie->id_lang);
+		$category = new Category((int)$product['id_category_default'], (int)$context->cookie->id_lang);
 		$categories = array();
 		$categories[] = $category->name;
 		$security = 0;
@@ -789,7 +790,6 @@ class GatewayProduct extends Gateway
 			$params = array('items' => $neteven_products);
 
 			$response = $this->client->PostItems($params);
-			$itemsStatus = '';
 
 			if ($this->getValue('debug'))
 				Toolbox::displayDebugMessage(self::getL('Sends data to NetEven'));
@@ -803,15 +803,16 @@ class GatewayProduct extends Gateway
 			$erreur = '<pre>Last request:\n'.$this->client->__getLastRequest().'</pre>\n';
 			Toolbox::manageError($e, 'add product nombre => '.count($neteven_products).' '.$erreur);
 			$response = '';
-			$itemsStatus = '';
 		}
 
 		if ($this->getValue('send_request_to_mail'))
-			$this->sendDebugMail($this->getValue('mail_list_alert'), self::getL('Debug - Control request').' addProductInNetEven', $this->client->__getLastRequest(), true);
+			$this->sendDebugMail($this->getValue('mail_list_alert'), self::getL('Debug - Control request').' addProductInNetEven',
+				$this->client->__getLastRequest(), true);
 
 		if ($response != '')
 		{
-			if (!empty($response->PostItemsResult) && !empty($response->PostItemsResult->InventoryItemStatusResponse) && is_array($response->PostItemsResult->InventoryItemStatusResponse))
+			if (!empty($response->PostItemsResult) && !empty($response->PostItemsResult->InventoryItemStatusResponse)
+				&& is_array($response->PostItemsResult->InventoryItemStatusResponse))
 				foreach ($response->PostItemsResult->InventoryItemStatusResponse as $rep)
 				{
 					Toolbox::addLogLine($rep->ItemCode.' '.$rep->StatusResponse);
@@ -821,9 +822,12 @@ class GatewayProduct extends Gateway
 				}
 			else
 			{
-				Toolbox::addLogLine($response->PostItemsResult->InventoryItemStatusResponse->ItemCode.' '.$response->PostItemsResult->InventoryItemStatusResponse->StatusResponse);
+				Toolbox::addLogLine($response->PostItemsResult->InventoryItemStatusResponse->ItemCode.' '.
+					$response->PostItemsResult->InventoryItemStatusResponse->StatusResponse);
 				if ($this->getValue('debug'))
-					Toolbox::displayDebugMessage(self::getL('Add product').' : '.$response->PostItemsResult->InventoryItemStatusResponse->ItemCode.' '.$response->PostItemsResult->InventoryItemStatusResponse->StatusResponse);
+					Toolbox::displayDebugMessage(self::getL('Add product').' : '.
+						$response->PostItemsResult->InventoryItemStatusResponse->ItemCode.' '.
+						$response->PostItemsResult->InventoryItemStatusResponse->StatusResponse);
 
 			}
 
@@ -854,11 +858,11 @@ class GatewayProduct extends Gateway
 
 		if ($id_zone == 0)
 		{
-			$defaultCountry = new Country(Configuration::get('PS_COUNTRY_DEFAULT'), Configuration::get('PS_LANG_DEFAULT'));
-			$id_zone = (int)$defaultCountry->id_zone;
+			$default_country = new Country(Configuration::get('PS_COUNTRY_DEFAULT'), Configuration::get('PS_LANG_DEFAULT'));
+			$id_zone = (int)$default_country->id_zone;
 		}
 
-		$carrierTax = Tax::getCarrierTaxRate((int)$carrier->id);
+		$carrier_tax = Tax::getCarrierTaxRate((int)$carrier->id);
 
 		$free_weight = Configuration::get('PS_SHIPPING_FREE_WEIGHT');
 		$shipping_handling = Configuration::get('PS_SHIPPING_HANDLING');
@@ -877,7 +881,7 @@ class GatewayProduct extends Gateway
 			else
 				$shipping += $carrier->getDeliveryPriceByPrice($product->getPrice(true, $attribute_id, 2, null, false, true, 1), $id_zone);
 
-			$shipping *= 1 + ($carrierTax / 100);
+			$shipping *= 1 + ($carrier_tax / 100);
 			$shipping = (float)Tools::ps_round((float)$shipping, 2);
 		}
 
@@ -954,13 +958,6 @@ class GatewayProduct extends Gateway
 	{
 		$context = Context::getContext();
 
-		if ($this->getValue('debug'))
-			$neteven_date_export_product = '';
-		else
-			$neteven_date_export_product = Configuration::get('neteven_date_export_product');
-
-		$separator = $this->getValue('separator');
-
 		$id_lang = isset($context->cookie->id_lang) ? (int)$context->cookie->id_lang : (int)Configuration::get('PS_LANG_DEFAULT');
 		$sql = 'SELECT SQL_CALC_FOUND_ROWS
 			p.`id_product`,
@@ -970,12 +967,16 @@ class GatewayProduct extends Gateway
 			p.`reference` as product_reference,
 			pa.`reference` as product_attribute_reference,
 			p.`wholesale_price`
-			'.((self::$type_sku != 'reference') ? ',(SELECT CONCAT(\'D\', pa2.`id_product_attribute`) FROM `'._DB_PREFIX_.'product_attribute` pa2 WHERE pa2.`id_product` = p.`id_product` AND `default_on` = 1 LIMIT 1) as declinaison_default' : '').'
-				'.((self::$type_sku == 'reference') ? ',(SELECT pa2.`reference` FROM `'._DB_PREFIX_.'product_attribute` pa2 WHERE pa2.`id_product` = p.`id_product` AND `default_on` = 1 LIMIT 1) as declinaison_default_ref' : '').'
+			'.((self::$type_sku != 'reference') ? ',(SELECT CONCAT(\'D\', pa2.`id_product_attribute`) FROM `'._DB_PREFIX_.'product_attribute` pa2
+				WHERE pa2.`id_product` = p.`id_product` AND `default_on` = 1 LIMIT 1) as declinaison_default' : '').'
+			'.((self::$type_sku == 'reference') ? ',(SELECT pa2.`reference` FROM `'._DB_PREFIX_.'product_attribute` pa2
+				WHERE pa2.`id_product` = p.`id_product` AND `default_on` = 1 LIMIT 1) as declinaison_default_ref' : '').'
 		FROM `'._DB_PREFIX_.'product` p
 		LEFT JOIN `'._DB_PREFIX_.'product_lang` pl ON (pl.`id_product` = p.`id_product` AND pl.`id_lang` = '.(int)$id_lang.')
 		LEFT JOIN `'._DB_PREFIX_.'product_attribute` pa ON (pa.`id_product` = p.`id_product`)
-		WHERE 1 '.((is_array($products_exlusion) && count($products_exlusion) > 0) ? ' AND (p.`reference` NOT IN ('.implode(',', pSQL($products_exlusion)).') AND pa.`reference` NOT IN ('.implode(',', pSQL($products_exlusion)).'))' : '');
+		WHERE 1 '.((is_array($products_exlusion) && count($products_exlusion) > 0) ? '
+		AND (p.`reference` NOT IN ('.implode(',', pSQL($products_exlusion)).')
+		AND pa.`reference` NOT IN ('.implode(',', pSQL($products_exlusion)).'))' : '');
 
 		if (self::$stock_export_only_active)
 			$sql .= ' AND p.`active` = 1 AND p.`available_for_order` = 1';
@@ -1015,19 +1016,14 @@ class GatewayProduct extends Gateway
 		if (!count($products) || !$products)
 			return false;
 
-		$context = Context::getContext();
-
-		$link = new Link();
-
 		$products_temp = array();
 
-		$compteur_product_no_ean13 = 0;
-		$compteur_product_no_ref = 0;
 		foreach ($products as $product)
 		{
 			// Ajout pour le flux en ajax.
 			self::$synchro_product_current++;
-			Gateway::setStepAjaxCron(2, 'Processed : '.(int)ceil((self::$synchro_product_current * 100) / self::$synchro_product_total).' % - lot en cours : '.self::$synchro_product_lot.' / '.(int)self::$synchro_product_lot_total, Tools::getValue('uniqkey'));
+			Gateway::setStepAjaxCron(2, 'Processed : '.(int)ceil((self::$synchro_product_current * 100) / self::$synchro_product_total).
+				' % - lot en cours : '.self::$synchro_product_lot.' / '.(int)self::$synchro_product_lot_total, Tools::getValue('uniqkey'));
 
 			/*
 			 * Reference
@@ -1047,21 +1043,15 @@ class GatewayProduct extends Gateway
 			 * Ean13
 			 */
 			$ean_ps = !empty($product['ean13_declinaison']) ? $product['ean13_declinaison'] : $product['ean13'];
-			$codeEan = '';
+			$code_ean = '';
 			if (!empty($ean_ps))
-				$codeEan = sprintf('%013s', $ean_ps);
-
-			/*
-			 * Product attribute
-			 */
-			$id_product_attribute = null;
-			if (!empty($product['id_product_attribute']))
-				$id_product_attribute = (int)$product['id_product_attribute'];
+				$code_ean = sprintf('%013s', $ean_ps);
 
 			/*
 			 * Quantity
 			 */
-			$quantity = Product::getQuantity((int)$product['id_product'], !empty($product['id_product_attribute']) ? (int)$product['id_product_attribute'] : null);
+			$quantity = Product::getQuantity((int)$product['id_product'],
+				!empty($product['id_product_attribute']) ? (int)$product['id_product_attribute'] : null);
 
 			if (!self::$stock_export_oos && (int)$quantity <= 0)
 				continue;
@@ -1096,7 +1086,7 @@ class GatewayProduct extends Gateway
 							switch ($config)
 							{
 								case 'ean13' :
-									$content = $codeEan;
+									$content = $code_ean;
 									break;
 								case 'upc' :
 									$content = '';
@@ -1124,6 +1114,9 @@ class GatewayProduct extends Gateway
 				}
 			}
 		}
+
+		if ($display == true)
+			echo 'trace';
 
 		return $products_temp;
 	}

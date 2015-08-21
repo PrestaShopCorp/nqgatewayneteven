@@ -26,7 +26,7 @@
 
 class Toolbox
 {
-	private static $_log;
+	private static $log;
 	protected static $handle_instance = false;
 
 	public static function manageError($e, $type_error)
@@ -39,12 +39,12 @@ class Toolbox
 		if (!self::$handle_instance)
 			self::$handle_instance = @fopen(dirname(__FILE__).'/../logs/logs-'.date('Y-m-d').'.txt', 'a+');
 
-		if (!empty(self::$_log) && !$is_error)
+		if (!empty(self::$log) && !$is_error)
 		{
 			if (self::$handle_instance)
-				fwrite(self::$handle_instance, self::$_log);
+				fwrite(self::$handle_instance, self::$log);
 
-			self::$_log = '';
+			self::$log = '';
 		}
 
 		if ($is_error)
@@ -56,7 +56,7 @@ class Toolbox
 
 	public static function addLogLine($string, $time = true)
 	{
-		self::$_log .= ($time ? date('Y-m-d H:i:s').' - ' : "\t").$string."\n";
+		self::$log .= ($time ? date('Y-m-d H:i:s').' - ' : "\t").$string."\n";
 	}
 
 	public static function numericFilter($string)

@@ -65,8 +65,8 @@ class GatewayOrder extends Gateway
 		try
 		{
 			$params = array();
-			$getOrdersResponse = $this->client->GetOrders($params);
-			$neteven_orders = (array)$getOrdersResponse->GetOrdersResult->MarketPlaceOrder;
+			$get_orders_response = $this->client->GetOrders($params);
+			$neteven_orders = (array)$get_orders_response->GetOrdersResult->MarketPlaceOrder;
 		}
 		catch (Exception $e)
 		{
@@ -80,7 +80,8 @@ class GatewayOrder extends Gateway
 		$this->sandbox = (int)Gateway::getConfig('SAND_BOX') == 1 ? true : false;
 
 		if ($this->getValue('send_request_to_mail'))
-			$this->sendDebugMail($this->getValue('mail_list_alert'), self::getL('Debug - Control request').' getOrderNetEven', $this->client->__getLastRequest(), true);
+			$this->sendDebugMail($this->getValue('mail_list_alert'),
+				self::getL('Debug - Control request').' getOrderNetEven', $this->client->__getLastRequest(), true);
 
 		/* if one command, transform this to array. */
 		if (isset($neteven_orders['OrderID']))
@@ -102,8 +103,7 @@ class GatewayOrder extends Gateway
 				self::$synchro_order_total++;
 			}
 
-		$t_order_real = array();
-		foreach ($neteven_orders as $key => &$neteven_order)
+		foreach ($neteven_orders as &$neteven_order)
 		{
 			$neteven_order = (object)$neteven_order;
 			//$control = true;
@@ -113,13 +113,17 @@ class GatewayOrder extends Gateway
 				continue;
 
 			// Specific check.
-			if (trim(Tools::strtolower($neteven_order->BillingAddress->FirstName)) == 'none' || (!isset($neteven_order->DatePayment) && strpos(Tools::strtolower($neteven_order->MarketPlaceName), 'cdiscount') !== false) || (!isset($neteven_order->DatePayment) && strpos(Tools::strtolower($neteven_order->MarketPlaceName), 'ebay') !== false) || (!isset($neteven_order->DatePayment) && strpos(Tools::strtolower($neteven_order->MarketPlaceName), 'zalando') !== false))
+			if (trim(Tools::strtolower($neteven_order->BillingAddress->FirstName)) == 'none' || (!isset($neteven_order->DatePayment)
+					&& strpos(Tools::strtolower($neteven_order->MarketPlaceName), 'cdiscount') !== false) || (!isset($neteven_order->DatePayment)
+					&& strpos(Tools::strtolower($neteven_order->MarketPlaceName), 'ebay') !== false) || (!isset($neteven_order->DatePayment)
+					&& strpos(Tools::strtolower($neteven_order->MarketPlaceName), 'zalando') !== false))
 				continue;
 
 			/* Test status of others products of this command. */
 			/*foreach ($neteven_orders as $neteven_order_temp)
 			{
-				if ($neteven_order->OrderID == $neteven_order_temp->OrderID && !in_array($neteven_order_temp->Status, $this->getValue('t_list_order_status_traite')))
+				if ($neteven_order->OrderID == $neteven_order_temp->OrderID
+					&& !in_array($neteven_order_temp->Status, $this->getValue('t_list_order_status_traite')))
 				{
 					$control = false;
 					break;
@@ -129,13 +133,17 @@ class GatewayOrder extends Gateway
 			if (!$display)
 			{
 				/* test command status and if the command already exists.*/
-				if (isset($this->neteven_order_status[$neteven_order->Status]) && $this->neteven_order_status[$neteven_order->Status]['accepted'] && !isset($order_prev[$neteven_order->OrderLineID]))
+				if (isset($this->neteven_order_status[$neteven_order->Status]) && $this->neteven_order_status[$neteven_order->Status]['accepted']
+					&& !isset($order_prev[$neteven_order->OrderLineID]))
 					$this->addOrderInBDD($neteven_order, $neteven_orders);
 
 				if (strpos(Tools::strtolower($neteven_order->MarketPlaceName), 'priceminister') !== false)
 					$this->updateOrderTotal($neteven_order, $neteven_orders);
 
-				if (strpos(Tools::strtolower($neteven_order->MarketPlaceName), 'laredoute') !== false || strpos(Tools::strtolower($neteven_order->MarketPlaceName), 'cdiscount') !== false || strpos(Tools::strtolower($neteven_order->MarketPlaceName), 'glafayette') !== false || strpos(Tools::strtolower($neteven_order->MarketPlaceName), 'play') !== false)
+				if (strpos(Tools::strtolower($neteven_order->MarketPlaceName),
+						'laredoute') !== false || strpos(Tools::strtolower($neteven_order->MarketPlaceName),
+						'cdiscount') !== false || strpos(Tools::strtolower($neteven_order->MarketPlaceName),
+						'glafayette') !== false || strpos(Tools::strtolower($neteven_order->MarketPlaceName), 'play') !== false)
 					$this->updateOrderAddress($neteven_order);
 			}
 
@@ -148,7 +156,8 @@ class GatewayOrder extends Gateway
 				$temp[$neteven_order->OrderID] = 2;
 
 				if (!empty(self::$synchro_order_total))
-					Gateway::setStepAjaxCron(2, 'Processed : '.(int)ceil((self::$synchro_order_current * 100) / self::$synchro_order_total).' % - Commande : '.self::$synchro_order_current.' / '.(int)self::$synchro_order_total, Tools::getValue('uniqkey'));
+					Gateway::setStepAjaxCron(2, 'Processed : '.(int)ceil((self::$synchro_order_current * 100) / self::$synchro_order_total).
+						' % - Commande : '.self::$synchro_order_current.' / '.(int)self::$synchro_order_total, Tools::getValue('uniqkey'));
 			}
 		}
 
@@ -159,15 +168,18 @@ class GatewayOrder extends Gateway
 
 	private function updateOrderAddress($neteven_order)
 	{
-		if ($id_order = Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue('SELECT `id_order` FROM `'._DB_PREFIX_.'orders_gateway` WHERE `id_order_neteven` = '.(int)$neteven_order->OrderID))
+		if ($id_order = Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue('SELECT `id_order` FROM `'._DB_PREFIX_.'orders_gateway`
+			WHERE `id_order_neteven` = '.(int)$neteven_order->OrderID))
 		{
 			$order = new Order((int)$id_order);
 			$last_name = Toolbox::removeAccents($neteven_order->BillingAddress->LastName);
 
 			$customer = new Customer((int)$order->id_customer);
-			$customer->firstname = (!empty($neteven_order->BillingAddress->FirstName)) ? Tools::substr(Toolbox::stringFilter($neteven_order->BillingAddress->FirstName), 0, 32) : ' ';
+			$customer->firstname = (!empty($neteven_order->BillingAddress->FirstName)) ?
+				Tools::substr(Toolbox::stringFilter($neteven_order->BillingAddress->FirstName), 0, 32) : ' ';
 			$customer->lastname = (!empty($last_name)) ? Tools::substr(Toolbox::stringFilter($last_name), 0, 32) : ' ';
-			$customer->email = (Validate::isEmail($neteven_order->BillingAddress->Email) && !empty($neteven_order->BillingAddress->Email)) ? '_'.$neteven_order->BillingAddress->Email : '_client'.$neteven_order->OrderID.'@'.$neteven_order->MarketPlaceName.'.com';
+			$customer->email = (Validate::isEmail($neteven_order->BillingAddress->Email) && !empty($neteven_order->BillingAddress->Email))
+				? '_'.$neteven_order->BillingAddress->Email : '_client'.$neteven_order->OrderID.'@'.$neteven_order->MarketPlaceName.'.com';
 			$customer->save();
 			$date_now = date('Y-m-d H:i:s');
 
@@ -175,9 +187,12 @@ class GatewayOrder extends Gateway
 			$id_country = $this->getValue('id_country_default');
 
 			$address = new Address((int)$order->id_address_delivery);
-			$address->lastname = (!empty($shipping_address->LastName)) ? Tools::substr(Toolbox::stringFilter($shipping_address->LastName), 0, 32) : ' ';
-			$address->firstname = (!empty($shipping_address->FirstName)) ? Tools::substr(Toolbox::stringFilter($shipping_address->FirstName), 0, 32) : ' ';
-			$address->address1 = (!empty($shipping_address->Address1)) ? Toolbox::stringWithNumericFilter($shipping_address->Address1) : ' ';
+			$address->lastname = (!empty($shipping_address->LastName))
+				? Tools::substr(Toolbox::stringFilter($shipping_address->LastName), 0, 32) : ' ';
+			$address->firstname = (!empty($shipping_address->FirstName))
+				? Tools::substr(Toolbox::stringFilter($shipping_address->FirstName), 0, 32) : ' ';
+			$address->address1 = (!empty($shipping_address->Address1))
+				? Toolbox::stringWithNumericFilter($shipping_address->Address1) : ' ';
 			$address->address2 = Toolbox::stringWithNumericFilter($shipping_address->Address2);
 			$address->postcode = Toolbox::numericFilter($shipping_address->PostalCode);
 			$address->city = (!empty($shipping_address->CityName)) ? Toolbox::stringFilter($shipping_address->CityName) : ' ';
@@ -193,9 +208,12 @@ class GatewayOrder extends Gateway
 
 			$billing_address = $neteven_order->BillingAddress;
 			$address = new Address((int)$order->id_address_invoice);
-			$address->lastname = (!empty($billing_address->LastName)) ? Tools::substr(Toolbox::stringFilter($billing_address->LastName), 0, 32) : ' ';
-			$address->firstname = (!empty($billing_address->FirstName)) ? Tools::substr(Toolbox::stringFilter($billing_address->FirstName), 0, 32) : ' ';
-			$address->address1 = (!empty($billing_address->Address1)) ? Toolbox::stringWithNumericFilter($billing_address->Address1) : ' ';
+			$address->lastname = (!empty($billing_address->LastName))
+				? Tools::substr(Toolbox::stringFilter($billing_address->LastName), 0, 32) : ' ';
+			$address->firstname = (!empty($billing_address->FirstName))
+				? Tools::substr(Toolbox::stringFilter($billing_address->FirstName), 0, 32) : ' ';
+			$address->address1 = (!empty($billing_address->Address1))
+				? Toolbox::stringWithNumericFilter($billing_address->Address1) : ' ';
 			$address->address2 = Toolbox::stringWithNumericFilter($billing_address->Address2);
 			$address->postcode = Toolbox::numericFilter($billing_address->PostalCode);
 			$address->city = (!empty($billing_address->CityName)) ? Toolbox::stringFilter($billing_address->CityName) : ' ';
@@ -213,7 +231,8 @@ class GatewayOrder extends Gateway
 
 	private function updateOrderTotal($neteven_order, $neteven_orders)
 	{
-		if ($id_order = Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue('SELECT `id_order` FROM `'._DB_PREFIX_.'orders_gateway` WHERE `id_order_neteven` = '.(int)$neteven_order->OrderID))
+		if ($id_order = Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue('SELECT `id_order` FROM `'._DB_PREFIX_.'orders_gateway`
+			WHERE `id_order_neteven` = '.(int)$neteven_order->OrderID))
 		{
 			$total_wt = 0;
 			$total_product = 0;
@@ -221,7 +240,8 @@ class GatewayOrder extends Gateway
 
 			foreach ($neteven_orders as $neteven_order_temp)
 			{
-				if (isset($this->neteven_order_status[$neteven_order_temp->Status]) && !$this->neteven_order_status[$neteven_order_temp->Status]['in_total_price'])
+				if (isset($this->neteven_order_status[$neteven_order_temp->Status])
+					&& !$this->neteven_order_status[$neteven_order_temp->Status]['in_total_price'])
 					continue;
 
 				if ($neteven_order_temp->OrderID == $neteven_order->OrderID)
@@ -245,9 +265,8 @@ class GatewayOrder extends Gateway
 			if (method_exists('Tax', 'getCarrierTaxRate'))
 				$carrier_tax_rate = (float)Tax::getCarrierTaxRate($order->id_carrier, (int)$order->{Configuration::get('PS_TAX_ADDRESS_TYPE')});
 
-
-
-			$total_shipping_tax_excl = !empty($carrier_tax_rate) ? $neteven_order->OrderShippingCost->_ / ($carrier_tax_rate / 100) : $neteven_order->OrderShippingCost->_;
+			$total_shipping_tax_excl = !empty($carrier_tax_rate)
+				? $neteven_order->OrderShippingCost->_ / ($carrier_tax_rate / 100) : $neteven_order->OrderShippingCost->_;
 
 			$total_wt = $total_product_wt + $neteven_order->OrderShippingCost->_;
 			$total = $total_product + $total_shipping_tax_excl;
@@ -308,12 +327,15 @@ class GatewayOrder extends Gateway
 			LEFT JOIN `'._DB_PREFIX_.'product_attribute_combination` pac ON (pac.`id_product_attribute`=pa.`id_product_attribute`)
 			LEFT JOIN `'._DB_PREFIX_.'attribute` a ON (a.`id_attribute`=pac.`id_attribute`)
 			LEFT JOIN `'._DB_PREFIX_.'attribute_lang` al ON (al.id_attribute=a.`id_attribute` AND al.`id_lang`='.(int)$this->getValue('id_lang').')
-			LEFT JOIN `'._DB_PREFIX_.'attribute_group_lang` agl ON (agl.`id_attribute_group`=a.`id_attribute_group` AND agl.`id_lang`='.(int)$this->getValue('id_lang').')
+			LEFT JOIN `'._DB_PREFIX_.'attribute_group_lang` agl
+			ON (agl.`id_attribute_group`=a.`id_attribute_group` AND agl.`id_lang`='.(int)$this->getValue('id_lang').')
 			WHERE p.`active` = 1 AND '.$where_req.'
 			GROUP BY p.`id_product`'))
 		{
 			if ($this->getValue('mail_active'))
-				$this->sendDebugMail($this->getValue('mail_list_alert'), self::getL('Product not found when importing a NetEven order'), self::getL('Product not found SKU').' ('.$neteven_order->SKU.'). '.self::getL('NetEven Order Detail').' : '.print_r($neteven_order, true));
+				$this->sendDebugMail($this->getValue('mail_list_alert'), self::getL('Product not found when importing a NetEven order'),
+					self::getL('Product not found SKU').' ('.$neteven_order->SKU.'). '
+					.self::getL('NetEven Order Detail').' : '.print_r($neteven_order, true));
 
 			return;
 		}
@@ -324,7 +346,8 @@ class GatewayOrder extends Gateway
 			Toolbox::displayDebugMessage(self::getL('Start').' : '.((int)$this->current_time_0 - (int)$this->start_time).'s');
 		}
 
-		$order_already_exist = Db::getInstance()->getRow('SELECT * FROM `'._DB_PREFIX_.'orders_gateway` WHERE `id_order_neteven` = '.(int)$neteven_order->OrderID.' AND `id_order_detail_neteven` = 0');
+		$order_already_exist = Db::getInstance()->getRow('SELECT * FROM `'._DB_PREFIX_.'orders_gateway`
+		WHERE `id_order_neteven` = '.(int)$neteven_order->OrderID.' AND `id_order_detail_neteven` = 0');
 
 		/* Treatment of order */
 		$id_order_temp = $this->createOrder($neteven_order, $neteven_orders);
@@ -416,7 +439,8 @@ class GatewayOrder extends Gateway
 		}
 
 		/* Creating and add order in PrestaShop */
-		if (!$res = Db::getInstance()->getRow('SELECT * FROM `'._DB_PREFIX_.'orders_gateway` WHERE `id_order_neteven` = '.(int)$neteven_order->OrderID.' AND `id_order_detail_neteven` = 0'))
+		if (!$res = Db::getInstance()->getRow('SELECT * FROM `'._DB_PREFIX_.'orders_gateway`
+		WHERE `id_order_neteven` = '.(int)$neteven_order->OrderID.' AND `id_order_detail_neteven` = 0'))
 		{
 			// Changement de la devise si besoin.
 			$id_currency = (int)Configuration::get('PS_CURRENCY_DEFAULT');
@@ -497,10 +521,10 @@ class GatewayOrder extends Gateway
 			else
 				$carrier_tax_rate = 100;
 
-			$total_shipping_tax_excl = $carrier_tax_rate ? $neteven_order->OrderShippingCost->_ / ($carrier_tax_rate / 100) : $neteven_order->OrderShippingCost->_;
+			$total_shipping_tax_excl = $carrier_tax_rate
+				? $neteven_order->OrderShippingCost->_ / ($carrier_tax_rate / 100) : $neteven_order->OrderShippingCost->_;
 
 			$total_wt = $total_product_wt + $neteven_order->OrderShippingCost->_;
-			$total = $total_product + $total_shipping_tax_excl;
 
 			$order->total_discounts_tax_excl = 0;
 			$order->total_discounts_tax_incl = 0;
@@ -537,10 +561,14 @@ class GatewayOrder extends Gateway
 			{
 				$id_order_temp = $order->id;
 
-				Db::getInstance()->Execute('INSERT INTO `'._DB_PREFIX_.'order_carrier` (`id_order`, `id_carrier`, `id_order_invoice`, `weight`, `shipping_cost_tax_excl`, `shipping_cost_tax_incl`, `tracking_number`, `date_add`) VALUES ('.(int)$id_order_temp.', '.(int)Gateway::getConfig('CARRIER_NETEVEN').', 0, 0, 0, 0, 0,"'.pSQL(date('Y-m-d H:i:s')).'")');
+				Db::getInstance()->Execute('INSERT INTO `'._DB_PREFIX_.'order_carrier` (`id_order`, `id_carrier`, `id_order_invoice`, `weight`,
+				`shipping_cost_tax_excl`, `shipping_cost_tax_incl`, `tracking_number`, `date_add`)
+				VALUES ('.(int)$id_order_temp.', '.(int)Gateway::getConfig('CARRIER_NETEVEN').', 0, 0, 0, 0, 0,"'.pSQL(date('Y-m-d H:i:s')).'")');
 
-				Db::getInstance()->Execute('INSERT INTO `'._DB_PREFIX_.'message` (`id_order`, `message`, `date_add`) VALUES ('.(int)$id_order_temp.', "Place de marché '.$neteven_order->MarketPlaceName.'", "'.pSQL(date('Y-m-d H:i:s')).'")');
-				Db::getInstance()->Execute('INSERT INTO `'._DB_PREFIX_.'message` (`id_order`, `message`, `date_add`) VALUES ('.(int)$id_order_temp.', "ID order NetEven '.$neteven_order->MarketPlaceOrderId.'", "'.pSQL(date('Y-m-d H:i:s')).'")');
+				Db::getInstance()->Execute('INSERT INTO `'._DB_PREFIX_.'message` (`id_order`, `message`, `date_add`)
+				VALUES ('.(int)$id_order_temp.', "Place de marché '.$neteven_order->MarketPlaceName.'", "'.pSQL(date('Y-m-d H:i:s')).'")');
+				Db::getInstance()->Execute('INSERT INTO `'._DB_PREFIX_.'message` (`id_order`, `message`, `date_add`)
+				VALUES ('.(int)$id_order_temp.', "ID order NetEven '.$neteven_order->MarketPlaceOrderId.'", "'.pSQL(date('Y-m-d H:i:s')).'")');
 
 				if ($this->time_analyse)
 				{
@@ -557,7 +585,9 @@ class GatewayOrder extends Gateway
 				}
 
 				/* Insert order in orders_gateway table */
-				if (!Db::getInstance()->Execute('INSERT INTO `'._DB_PREFIX_.'orders_gateway` (`id_order_neteven`, `id_order`, `id_order_detail_neteven`, `date_add`, `date_upd`) VALUES ('.(int)$neteven_order->OrderID.', '.(int)$id_order_temp.', 0, "'.pSQL($date_now).'", "'.pSQL($date_now).'")'))
+				if (!Db::getInstance()->Execute('INSERT INTO `'._DB_PREFIX_.'orders_gateway` (`id_order_neteven`, `id_order`,
+				`id_order_detail_neteven`, `date_add`, `date_upd`)
+				VALUES ('.(int)$neteven_order->OrderID.', '.(int)$id_order_temp.', 0, "'.pSQL($date_now).'", "'.pSQL($date_now).'")'))
 					Toolbox::addLogLine(self::getL('Failed for save export NetEven order Id').' '.(int)$neteven_order->OrderID);
 				else
 					Toolbox::addLogLine(self::getL('Save export NetEven order Id').' '.(int)$neteven_order->OrderID);
@@ -567,7 +597,8 @@ class GatewayOrder extends Gateway
 		else
 		{
 			$id_order_temp = $res['id_order'];
-			Toolbox::addLogLine(self::getL('Get already exported order Id').' '.$res['id_order'].' '.self::getL('NetEven Order Id').' '.(int)$neteven_order->OrderID);
+			Toolbox::addLogLine(self::getL('Get already exported order Id').' '.$res['id_order'].' '.
+				self::getL('NetEven Order Id').' '.(int)$neteven_order->OrderID);
 		}
 
 		return $id_order_temp;
@@ -594,7 +625,8 @@ class GatewayOrder extends Gateway
 				$new_history->id_order = (int)$id_order;
 				$new_history->changeIdOrderState((int)$id_order_state, $id_order);
 				$new_history->addWithemail(true, array());
-				Toolbox::addLogLine(self::getL('Save order state Id').' '.(int)$id_order_state.' '.self::getL('NetEven Order Id').' '.(int)$neteven_order->OrderID);
+				Toolbox::addLogLine(self::getL('Save order state Id').' '.(int)$id_order_state.' '.
+					self::getL('NetEven Order Id').' '.(int)$neteven_order->OrderID);
 			}
 	}
 
@@ -615,7 +647,8 @@ class GatewayOrder extends Gateway
 			return;
 
 		/* If order detail doesn't exist */
-		if (!$res = Db::getInstance()->getRow('SELECT * FROM `'._DB_PREFIX_.'orders_gateway` WHERE `id_order_neteven` = '.(int)$neteven_order->OrderID.' AND `id_order_detail_neteven` = '.(int)$neteven_order->OrderLineID))
+		if (!Db::getInstance()->getRow('SELECT * FROM `'._DB_PREFIX_.'orders_gateway`
+		WHERE `id_order_neteven` = '.(int)$neteven_order->OrderID.' AND `id_order_detail_neteven` = '.(int)$neteven_order->OrderLineID))
 		{
 			/* If product exist */
 			$ref_temp = $neteven_order->SKU;
@@ -636,14 +669,19 @@ class GatewayOrder extends Gateway
 				return;
 
 			$res_product = Db::getInstance()->getRow('
-					SELECT pl.`name` as name_product, p.`id_product`, pa.`id_product_attribute`, p.`reference` as product_reference, pa.`reference` as product_attribute_reference, p.`weight` as weight, GROUP_CONCAT(CONCAT(agl.`name`," : ",al.`name`) SEPARATOR ", ") as attribute_name
+					SELECT pl.`name` as name_product, p.`id_product`, pa.`id_product_attribute`, p.`reference` as product_reference,
+					pa.`reference` as product_attribute_reference, p.`weight` as weight,
+					GROUP_CONCAT(CONCAT(agl.`name`," : ",al.`name`) SEPARATOR ", ") as attribute_name
 					FROM `'._DB_PREFIX_.'product` p
-					INNER JOIN `'._DB_PREFIX_.'product_lang` pl ON(p.`id_product` = pl.`id_product` AND pl.`id_lang` = '.(int)$this->getValue('id_lang').')
+					INNER JOIN `'._DB_PREFIX_.'product_lang` pl
+					ON(p.`id_product` = pl.`id_product` AND pl.`id_lang` = '.(int)$this->getValue('id_lang').')
 					LEFT JOIN `'._DB_PREFIX_.'product_attribute` pa ON (pa.`id_product` = p.`id_product`)
 					LEFT JOIN `'._DB_PREFIX_.'product_attribute_combination` pac ON (pac.`id_product_attribute`=pa.`id_product_attribute`)
 					LEFT JOIN `'._DB_PREFIX_.'attribute` a ON (a.`id_attribute`=pac.`id_attribute`)
-					LEFT JOIN `'._DB_PREFIX_.'attribute_lang` al ON (al.`id_attribute`=a.`id_attribute` AND al.`id_lang`='.(int)$this->getValue('id_lang').')
-					LEFT JOIN `'._DB_PREFIX_.'attribute_group_lang` agl ON (agl.`id_attribute_group`=a.`id_attribute_group` AND agl.`id_lang`='.(int)$this->getValue('id_lang').')
+					LEFT JOIN `'._DB_PREFIX_.'attribute_lang` al
+					ON (al.`id_attribute`=a.`id_attribute` AND al.`id_lang`='.(int)$this->getValue('id_lang').')
+					LEFT JOIN `'._DB_PREFIX_.'attribute_group_lang` agl
+					ON (agl.`id_attribute_group`=a.`id_attribute_group` AND agl.`id_lang`='.(int)$this->getValue('id_lang').')
 					WHERE p.`active` = 1 AND '.$where_req.'
 					GROUP BY pa.`id_product_attribute`, p.`id_product`
 				');
@@ -669,13 +707,19 @@ class GatewayOrder extends Gateway
 				/* Add product in cart */
 				$order = new Order($id_order);
 
-				if (!Db::getInstance()->getRow('SELECT `id_cart` FROM `'._DB_PREFIX_.'cart_product` WHERE `id_cart` = '.(int)$order->id_cart.' AND `id_product` = '.(int)$res_product['id_product'].' AND `id_product_attribute` = '.(int)$id_product_attribute))
-					Db::getInstance()->Execute('INSERT INTO `'._DB_PREFIX_.'cart_product` (`id_cart`, `id_product`, `id_product_attribute`, `quantity`, `date_add`) VALUES ('.(int)$order->id_cart.', '.(int)$res_product['id_product'].', '.(int)$id_product_attribute.', '.(int)$neteven_order->Quantity.', "'.pSQL($date_now).'")');
+				if (!Db::getInstance()->getRow('SELECT `id_cart` FROM `'._DB_PREFIX_.'cart_product`
+				WHERE `id_cart` = '.(int)$order->id_cart.' AND `id_product` = '.(int)$res_product['id_product'].
+					' AND `id_product_attribute` = '.(int)$id_product_attribute))
+					Db::getInstance()->Execute('INSERT INTO `'._DB_PREFIX_.'cart_product`
+					(`id_cart`, `id_product`, `id_product_attribute`, `quantity`, `date_add`)
+					VALUES ('.(int)$order->id_cart.', '.(int)$res_product['id_product'].', '.(int)$id_product_attribute.
+						','.(int)$neteven_order->Quantity.', "'.pSQL($date_now).'")');
 
 				if ($this->time_analyse)
 				{
 					$this->current_time_0 = time();
-					Toolbox::displayDebugMessage(self::getL('Order information').' : '.((int)$this->current_time_0 - (int)$this->current_time_2).'s');
+					Toolbox::displayDebugMessage(self::getL('Order information').' : '.
+						((int)$this->current_time_0 - (int)$this->current_time_2).'s');
 				}
 
 				/* Add order detail */
@@ -687,7 +731,8 @@ class GatewayOrder extends Gateway
 				}
 				else
 				{
-					$tax_manager = TaxManagerFactory::getManager(new Address($order->id_address_delivery), Product::getIdTaxRulesGroupByIdProduct((int)$res_product['id_product'], $context));
+					$tax_manager = TaxManagerFactory::getManager(new Address($order->id_address_delivery),
+						Product::getIdTaxRulesGroupByIdProduct((int)$res_product['id_product'], $context));
 					$current_tax_rate = $tax_manager->getTaxCalculator()->getTotalRate();
 					$current_tax_name = $tax_manager->getTaxCalculator()->getTaxesName();
 				}
@@ -752,7 +797,8 @@ class GatewayOrder extends Gateway
 					$order_detail->id_shop = 1;
 
 				if (!$order_detail->add())
-					Toolbox::addLogLine(self::getL('Failed for creation of order detail / NetEven Order Id').' '.(int)$neteven_order->OrderID.' '.self::getL('NetEven order detail id').' '.$neteven_order->OrderLineID);
+					Toolbox::addLogLine(self::getL('Failed for creation of order detail / NetEven Order Id').' '.(int)$neteven_order->OrderID.' '.
+						self::getL('NetEven order detail id').' '.$neteven_order->OrderLineID);
 				else
 				{
 					if ($this->time_analyse)
@@ -761,18 +807,21 @@ class GatewayOrder extends Gateway
 						Toolbox::displayDebugMessage(self::getL('Order detail').' : '.((int)$this->current_time_2 - (int)$this->current_time_0).'s');
 					}
 
-					$id_order_detail_temp = $order_detail->id;
-
-					Toolbox::addLogLine(self::getL('Creation of order detail for NetEven order Id').' '.(int)$neteven_order->OrderID.' '.self::getL('NetEven order detail id').' '.(int)$neteven_order->OrderLineID);
+					Toolbox::addLogLine(self::getL('Creation of order detail for NetEven order Id').' '.(int)$neteven_order->OrderID.' '.
+						self::getL('NetEven order detail id').' '.(int)$neteven_order->OrderLineID);
 
 					/* Update quantity of product */
 					if (class_exists('StockAvailable'))
 					{
 						/* Update quantity of product */
 						if ($control_attribute_product)
-							StockAvailable::setQuantity($res_product['id_product'], $id_product_attribute, StockAvailable::getQuantityAvailableByProduct($res_product['id_product'], $id_product_attribute) - $neteven_order->Quantity);
+							StockAvailable::setQuantity($res_product['id_product'], $id_product_attribute,
+								StockAvailable::getQuantityAvailableByProduct($res_product['id_product'], $id_product_attribute) -
+								$neteven_order->Quantity);
 						else
-							StockAvailable::setQuantity($res_product['id_product'], 0, StockAvailable::getQuantityAvailableByProduct($res_product['id_product']) - $neteven_order->Quantity);
+							StockAvailable::setQuantity($res_product['id_product'], 0,
+								StockAvailable::getQuantityAvailableByProduct($res_product['id_product']) -
+								$neteven_order->Quantity);
 
 					}
 					else
@@ -797,10 +846,15 @@ class GatewayOrder extends Gateway
 					}
 
 					/* Insert order in orders_gateway table */
-					if (!Db::getInstance()->Execute('INSERT INTO `'._DB_PREFIX_.'orders_gateway` (`id_order_neteven`, `id_order`, `id_order_detail_neteven`, `date_add`, `date_upd`) VALUES ('.(int)$neteven_order->OrderID.', '.(int)$id_order.', '.(int)$neteven_order->OrderLineID.', "'.pSQL($date_now).'", "'.pSQL($date_now).'")'))
-						Toolbox::addLogLine(self::getL('Failed for save export NetEven order Id').' '.(int)$neteven_order->OrderID.' '.self::getL('NetEven order detail id').' '.(int)$neteven_order->OrderLineID);
+					if (!Db::getInstance()->Execute('INSERT INTO `'._DB_PREFIX_.'orders_gateway`
+					(`id_order_neteven`, `id_order`, `id_order_detail_neteven`, `date_add`, `date_upd`)
+					VALUES ('.(int)$neteven_order->OrderID.', '.(int)$id_order.', '.(int)$neteven_order->OrderLineID.', "'.
+						pSQL($date_now).'", "'.pSQL($date_now).'")'))
+						Toolbox::addLogLine(self::getL('Failed for save export NetEven order Id').' '.(int)$neteven_order->OrderID.' '.
+							self::getL('NetEven order detail id').' '.(int)$neteven_order->OrderLineID);
 					else
-						Toolbox::addLogLine(self::getL('Save export NetEven order Id').' '.(int)$neteven_order->OrderID.' '.self::getL('NetEven order detail id').' '.(int)$neteven_order->OrderLineID);
+						Toolbox::addLogLine(self::getL('Save export NetEven order Id').' '.(int)$neteven_order->OrderID.' '.
+							self::getL('NetEven order detail id').' '.(int)$neteven_order->OrderLineID);
 
 					if (constant('_PS_VERSION_') >= 1.5)
 					{
@@ -814,13 +868,16 @@ class GatewayOrder extends Gateway
 			}
 		}
 		else
-			Toolbox::addLogLine(self::getL('Failed for creation of order detail of NetEven order Id').$neteven_order->OrderID.' '.self::getL('NetEven order detail id').' '.$neteven_order->OrderLineID.' '.self::getL('Product not found SKU').' '.$neteven_order->SKU);
+			Toolbox::addLogLine(self::getL('Failed for creation of order detail of NetEven order Id').$neteven_order->OrderID.' '.
+				self::getL('NetEven order detail id').' '.$neteven_order->OrderLineID.' '.
+				self::getL('Product not found SKU').' '.$neteven_order->SKU);
 
 		$order = new Order($id_order);
 		$products = $order->getProductsDetail();
 
 		if (count($products) == 0 && $this->getValue('mail_active'))
-			$this->sendDebugMail($this->getValue('mail_list_alert'), self::getL('Order imported is empty'), self::getL('Order Id').' '.(int)$order->id);
+			$this->sendDebugMail($this->getValue('mail_list_alert'), self::getL('Order imported is empty'),
+				self::getL('Order Id').' '.(int)$order->id);
 	}
 
 	/**
@@ -850,10 +907,12 @@ class GatewayOrder extends Gateway
 			$last_name = Toolbox::removeAccents($neteven_order->BillingAddress->LastName);
 
 			$new_customer = new Customer();
-			$new_customer->firstname = (!empty($neteven_order->BillingAddress->FirstName)) ? Tools::substr(Toolbox::stringFilter($neteven_order->BillingAddress->FirstName), 0, 32) : ' ';
+			$new_customer->firstname = (!empty($neteven_order->BillingAddress->FirstName))
+				? Tools::substr(Toolbox::stringFilter($neteven_order->BillingAddress->FirstName), 0, 32) : ' ';
 			$new_customer->lastname = (!empty($last_name)) ? Tools::substr(Toolbox::stringFilter($last_name), 0, 32) : ' ';
 			$new_customer->passwd = Tools::encrypt($this->getValue('default_passwd'));
-			$new_customer->email = (Validate::isEmail($neteven_order->BillingAddress->Email) && !empty($neteven_order->BillingAddress->Email)) ? '_'.$neteven_order->BillingAddress->Email : '_client'.$neteven_order->OrderID.'@'.$neteven_order->MarketPlaceName.'.com';
+			$new_customer->email = (Validate::isEmail($neteven_order->BillingAddress->Email) && !empty($neteven_order->BillingAddress->Email))
+				? '_'.$neteven_order->BillingAddress->Email : '_client'.$neteven_order->OrderID.'@'.$neteven_order->MarketPlaceName.'.com';
 			$new_customer->optin = 0;
 			if (isset($this->repere_customer) && $this->repere_customer)
 				$new_customer->is_neteven = 1;
@@ -863,9 +922,13 @@ class GatewayOrder extends Gateway
 
 			/* Insert customer in orders_gateway_customer table */
 			if (!empty($neteven_order->CustomerId))
-				Db::getInstance()->Execute('INSERT INTO `'._DB_PREFIX_.'orders_gateway_customer` (`id_customer`, `id_customer_neteven`) VALUES ('.(int)$new_customer->id.', '.(int)$neteven_order->CustomerId.')');
+				Db::getInstance()->Execute('INSERT INTO `'._DB_PREFIX_.'orders_gateway_customer` (`id_customer`, `id_customer_neteven`)
+				VALUES ('.(int)$new_customer->id.', '.(int)$neteven_order->CustomerId.')');
 			else
-				Db::getInstance()->Execute('INSERT INTO `'._DB_PREFIX_.'orders_gateway_customer` (`id_customer`, `mail_customer_neteven`) VALUES ('.(int)$new_customer->id.', "'.(Validate::isEmail($neteven_order->BillingAddress->Email) ? pSQL('_'.$neteven_order->BillingAddress->Email) : pSQL('_client'.(int)$neteven_order->OrderID.'@'.$neteven_order->MarketPlaceName.'.com')).'")');
+				Db::getInstance()->Execute('INSERT INTO `'._DB_PREFIX_.'orders_gateway_customer` (`id_customer`, `mail_customer_neteven`)
+				VALUES ('.(int)$new_customer->id.', "'.(Validate::isEmail($neteven_order->BillingAddress->Email)
+						? pSQL('_'.$neteven_order->BillingAddress->Email)
+						: pSQL('_client'.(int)$neteven_order->OrderID.'@'.$neteven_order->MarketPlaceName.'.com')).'")');
 
 			return (int)$new_customer->id;
 		}
@@ -1052,22 +1115,29 @@ class GatewayOrder extends Gateway
 				}
 
 				if ($this->getValue('send_request_to_mail'))
-					$this->sendDebugMail($this->getValue('mail_list_alert'), self::getL('Debug - Control request').' setOrderNetEven', $this->client->__getLastRequest(), true);
+					$this->sendDebugMail($this->getValue('mail_list_alert'), self::getL('Debug - Control request').' setOrderNetEven',
+						$this->client->__getLastRequest(), true);
 
-				if (!isset($order_status->StatusResponse) || (isset($order_status->StatusResponse) && $order_status->StatusResponse != 'Updated') || is_null($order_status))
+				if (!isset($order_status->StatusResponse) || (isset($order_status->StatusResponse)
+						&& $order_status->StatusResponse != 'Updated') || is_null($order_status))
 				{
 					$complement = !is_array($order_status->StatusResponse) ? $order_status->StatusResponse : '';
 					$complement .= is_array($order_status->StatusResponse) ? '<pre>'.print_r($order_status->StatusResponse, true).'</pre>' : '';
 
 					if ($this->getValue('send_request_to_mail'))
-						$this->sendDebugMail($this->getValue('mail_list_alert'), self::getL('Fail for update order state'), self::getL('Order Id').' ('.(int)$params['id_order'].'). '.self::getL('NetEven response').' : '.$complement);
+						$this->sendDebugMail($this->getValue('mail_list_alert'), self::getL('Fail for update order state'),
+							self::getL('Order Id').' ('.(int)$params['id_order'].'). '.self::getL('NetEven response').' : '.$complement);
 
 				}
 
 				if (!empty($order_status) && !is_null($order_status))
-					Toolbox::addLogLine(self::getL('Update order state').' '.$status.' '.self::getL('NetEven Order Id').' '.$res['id_order_neteven'].' '.self::getL('Order Id').' '.$res['id_order'].' - '.$order_status->StatusResponse.'');
+					Toolbox::addLogLine(self::getL('Update order state').' '.$status.' '.
+						self::getL('NetEven Order Id').' '.$res['id_order_neteven'].' '.
+						self::getL('Order Id').' '.$res['id_order'].' - '.$order_status->StatusResponse.'');
 
-				if (!Db::getInstance()->Execute('INSERT INTO `'._DB_PREFIX_.'orders_gateway_order_state` (`id_order`, `id_order_state`, `date_add`, `date_upd`) VALUES ('.(int)$res['id_order'].', '.(int)$params['newOrderStatus']->id.', "'.pSQL($date_now).'", "'.pSQL($date_now).'")'))
+				if (!Db::getInstance()->Execute('INSERT INTO `'._DB_PREFIX_.'orders_gateway_order_state`
+				(`id_order`, `id_order_state`, `date_add`, `date_upd`)
+				VALUES ('.(int)$res['id_order'].', '.(int)$params['newOrderStatus']->id.', "'.pSQL($date_now).'", "'.pSQL($date_now).'")'))
 					Toolbox::addLogLine(self::getL('Failed for save export NetEven order state Id').' '.(int)$res['id_order']);
 				else
 					Toolbox::addLogLine(self::getL('Save export of NetEven order state Id').' '.(int)$res['id_order']);
