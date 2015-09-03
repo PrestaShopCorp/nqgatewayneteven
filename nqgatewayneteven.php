@@ -46,7 +46,7 @@ class NqGatewayNeteven extends Module
 
 		$this->tab = $tab_name;
 
-		$this->version = '3.0.3';
+		$this->version = '3.0.4';
 		$this->author = 'NetEven';
 
 		parent::__construct();
@@ -480,6 +480,8 @@ class NqGatewayNeteven extends Module
 				if ($new_value_active == 0 && $new_value_active != $old_value)
 					Gateway::updateConfig('SYNCHRO_PRODUCT_CHANGE_ACTIVE', 1);
 
+				Gateway::updateConfig('SYNCHRO_STOCK_OOS', (int)Tools::getValue('SYNCHRO_STOCK_OOS', 0));
+
 				Gateway::updateConfig('SYNCHRONISATION_STOCK', (int)Tools::getValue('SYNCHRONISATION_STOCK'));
 
 				$this->html .= $this->displayConfirmation($this->l('Les paramètres de la synchronisation de stock ont bien été mis à jour'));
@@ -684,6 +686,7 @@ class NqGatewayNeteven extends Module
 			//------------------------------
 			//- Synchro stock
 			'SYNCHRONISATION_STOCK' => (int)Gateway::getConfig('SYNCHRONISATION_STOCK'),
+			'SYNCHRO_STOCK_OOS' => (int)Gateway::getConfig('SYNCHRO_STOCK_OOS'),
 			'SYNCHRO_STOCK_ONLY_ACTIVE' => (int)Gateway::getConfig('SYNCHRO_STOCK_ONLY_ACTIVE'),
 			//------------------------------
 			//- Synchro commande

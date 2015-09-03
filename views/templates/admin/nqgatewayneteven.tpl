@@ -335,6 +335,15 @@
 		<label class="t" for="{$field_index|escape:'htmlall':'UTF-8'}_off"> <img src="../img/admin/disabled.gif" alt="{l s='Non' mod='nqgatewayneteven'}" title="{l s='Non' mod='nqgatewayneteven'}" /></label>
 	</div>
 
+	<label>{l s='Exporter les produit hors stock' mod='nqgatewayneteven'}</label>
+	<div class="margin-form">
+		{assign "field_index" "SYNCHRO_STOCK_OOS"}
+		<input type="radio" name="{$field_index|escape:'htmlall':'UTF-8'}" id="{$field_index|escape:'htmlall':'UTF-8'}_on" value="1"{if $SYNCHRO_STOCK_OOS} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape:'htmlall':'UTF-8'}_on"> <img src="../img/admin/enabled.gif" alt="{l s='Oui' mod='nqgatewayneteven'}" title="{l s='Oui' mod='nqgatewayneteven'}" /></label>
+		<input type="radio" name="{$field_index|escape:'htmlall':'UTF-8'}" id="{$field_index|escape:'htmlall':'UTF-8'}_off" value="0"{if !$SYNCHRO_STOCK_OOS} checked="checked"{/if} />
+		<label class="t" for="{$field_index|escape:'htmlall':'UTF-8'}_off"> <img src="../img/admin/disabled.gif" alt="{l s='Non' mod='nqgatewayneteven'}" title="{l s='Non' mod='nqgatewayneteven'}" /></label>
+	</div>
+
 	<br class="clear" />
 	<center><input type="submit" name="submitSynchroStock" value="{l s='Enregistrer' mod='nqgatewayneteven'}" class="button" /></center>
 </fieldset>
