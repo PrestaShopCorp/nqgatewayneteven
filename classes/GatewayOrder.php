@@ -627,6 +627,9 @@ class GatewayOrder extends Gateway
 				$new_history->addWithemail(true, array());
 				Toolbox::addLogLine(self::getL('Save order state Id').' '.(int)$id_order_state.' '.
 					self::getL('NetEven Order Id').' '.(int)$neteven_order->OrderID);
+
+				/* @NewQuest SF : Pour empêcher d'avoir 2 statut avec un date_add identique. */
+				sleep(2);
 			}
 	}
 
