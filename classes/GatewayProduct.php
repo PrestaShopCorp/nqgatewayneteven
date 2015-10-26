@@ -437,7 +437,7 @@ class GatewayProduct extends Gateway
 			 */
 			if (self::$active_shipping)
 			{
-				$products_temp[$indice]['shipping_delay'] = $this->getValue('shipping_delay');
+				$products_temp[$indice]['ShippingDelay'] = $this->getValue('shipping_delay');
 				$products_temp[$indice]['Comment'] = $this->getValue('comment');
 
 				$shipping_price_local = $this->getValue('shipping_price_local');
@@ -457,15 +457,11 @@ class GatewayProduct extends Gateway
 				$carrier_inter = $this->getConfig('SHIPPING_CARRIER_INTERNATIONAL');
 				$carrier_zone_inter = $this->getConfig('SHIPPING_ZONE_INTERNATIONAL');
 
-				if (!empty($carrier_france) && !empty($carrier_zone_france))
+				if (!empty($carrier_inter) && !empty($carrier_zone_inter))
 					$products_temp[$indice]['PriceShippingInt1'] = $this->getShippingPrice($product['id_product'], $id_product_attribute,
 						$carrier_inter, $carrier_zone_inter);
 				elseif (!empty($shipping_price_inter))
 					$products_temp[$indice]['PriceShippingInt1'] = $shipping_price_inter;
-
-				if (!empty($carrier_france) && !empty($carrier_zone_france))
-					$products_temp[$indice]['PriceShippingInt1'] = $this->getShippingPrice($product['id_product'], $id_product_attribute,
-						$carrier_inter, $carrier_zone_inter);
 			}
 
 			/*

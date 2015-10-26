@@ -30,6 +30,7 @@
 	var neteven_token = "{$neteven_token|escape:'htmlall':'UTF-8'}";
 	var SHIPPING_ZONE_FRANCE = "{$SHIPPING_ZONE_FRANCE|floatval}";
 	var SHIPPING_CARRIER_INTERNATIONAL = "{$SHIPPING_CARRIER_INTERNATIONAL|floatval}";
+	var SHIPPING_ZONE_INTERNATIONAL = "{$SHIPPING_ZONE_INTERNATIONAL|floatval}";
 </script>
 <script type="text/javascript" src="{$module_dir|escape:'htmlall':'UTF-8'}views/js/nqgatewayneteven.js"></script>
 <link href="{$module_dir|escape:'htmlall':'UTF-8'}views/css/nqgatewayneteven.css" rel="stylesheet" type="text/css" media="all" />
@@ -552,6 +553,16 @@
 		<h4>{l s='Vos transporteurs pour calculer les frais de ports' mod='nqgatewayneteven'}</h4>
 
 		<h5>{l s='Local' mod='nqgatewayneteven'}</h5>
+
+		<label for="country_france">{l s='Pays local' mod='nqgatewayneteven'}</label>
+		<div class="margin-form">
+			<select name="SHIPPING_COUNTRY_FRANCE" id="country_france">
+				<option value="Autre" >{l s='Autre pays'}</option>
+				{foreach from=$countries item=country}
+					<option value="{$country.id_country|intval}" {if $SHIPPING_COUNTRY_FRANCE == $country.id_country}selected="selected"{/if}>{$country.name|escape:'htmlall':'UTF-8'}</option>
+				{/foreach}
+			</select>
+		</div>
 
 		<label>{l s='Transporteur' mod='nqgatewayneteven'}</label>
 		<div class="margin-form">

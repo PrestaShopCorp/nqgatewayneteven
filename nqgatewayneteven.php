@@ -46,7 +46,7 @@ class NqGatewayNeteven extends Module
 
 		$this->tab = $tab_name;
 
-		$this->version = '3.0.4';
+		$this->version = '3.0.5';
 		$this->author = 'NetEven';
 
 		parent::__construct();
@@ -191,6 +191,11 @@ class NqGatewayNeteven extends Module
 
 	private function installHookByVersion()
 	{
+		if (!Gateway::getConfig('REGISTER_HOOK_3')) {
+			$this->registerHook('postUpdateOrderStatus');
+			Gateway::updateConfig('REGISTER_HOOK_3', 1);
+		}
+
 		if ($this->version < 2)
 			return;
 
@@ -324,6 +329,7 @@ class NqGatewayNeteven extends Module
 		$this->unregisterHook('updateProduct');
 		$this->unregisterHook('updateQuantity');
 		$this->unregisterHook('updateProductAttribute');
+		$this->unregisterHook('postUpdateOrderStatus');
 
 		Gateway::updateConfig('UNREGISTER_HOOK', 1);
 	}
@@ -332,11 +338,38 @@ class NqGatewayNeteven extends Module
 	{
 		if ((int)$params['id_carrier'] != (int)$params['carrier']->id)
 		{
+			// Mise à jours des id_carrier pour les frais de ports //
+			if (Gateway::getConfig('SHIPPING_CARRIER_FRANCE') == $params['id_carrier']) {
+				Gateway::updateConfig('SHIPPING_CARRIER_FRANCE', (int)$params['carrier']->id);
+			}
+
+			if (Gateway::getConfig('SHIPPING_CARRIER_INTERNATIONAL') == $params['id_carrier']) {
+				Gateway::updateConfig('SHIPPING_CARRIER_INTERNATIONAL', (int)$params['carrier']->id);
+			}
+
 			$id_carrier_neteven = Gateway::getConfig('CARRIER_NETEVEN');
 			if ($params['id_carrier'] != $id_carrier_neteven)
 				return;
 
 			Gateway::updateConfig('CARRIER_NETEVEN', $params['carrier']->id);
+		}
+
+
+	}
+
+	public function hookPostUpdateOrderStatus($params)
+	{
+		if (!Db::getInstance()->getRow('SELECT * FROM `'._DB_PREFIX_.'orders_gateway` WHERE `id_order` = '.(int)$params['id_order']))
+			return;
+
+		if (!ValidateCore::isLoadedObject($params['newOrderStatus']) OR !$params['newOrderStatus']->paid)
+			return;
+
+		// Update payment name on order_payment table.
+		$o_order = new Order((int)$params['id_order']);
+		if (Validate::isLoadedObject($o_order)) {
+			$query = 'UPDATE '._DB_PREFIX_.'order_payment SET payment_method = "'.pSQL($o_order->payment).'" WHERE order_reference = "'.$o_order->reference.'"';
+			Db::getInstance()->execute($query);
 		}
 	}
 
@@ -529,6 +562,7 @@ class NqGatewayNeteven extends Module
 			Gateway::updateConfig('SHIPPING_BY_PRODUCT', (int)Tools::getValue('SHIPPING_BY_PRODUCT'));
 			Gateway::updateConfig('SHIPPING_BY_PRODUCT_FIELDNAME', Tools::getValue('SHIPPING_BY_PRODUCT_FIELDNAME'));
 
+			Gateway::updateConfig('SHIPPING_COUNTRY_FRANCE', Tools::getValue('SHIPPING_COUNTRY_FRANCE'));
 			Gateway::updateConfig('SHIPPING_CARRIER_FRANCE', Tools::getValue('SHIPPING_CARRIER_FRANCE'));
 			Gateway::updateConfig('SHIPPING_ZONE_FRANCE', Tools::getValue('SHIPPING_ZONE_FRANCE'));
 			Gateway::updateConfig('SHIPPING_CARRIER_INTERNATIONAL', Tools::getValue('SHIPPING_CARRIER_INTERNATIONAL'));
@@ -591,7 +625,7 @@ class NqGatewayNeteven extends Module
 			foreach (explode('¤', Gateway::getConfig('CUSTOMIZABLE_FIELDS')) as $customizable_field)
 				$customizable_fields[] = explode('|', $customizable_field);
 
-		$carriers = Carrier::getCarriers((int)$this->context->cookie->id_lang);
+		$carriers = Carrier::getCarriers((int)$this->context->cookie->id_lang, false, false, false, null, Carrier::ALL_CARRIERS);
 
 		$countries = CountryCore::getCountries((int)$this->context->cookie->id_lang);
 
@@ -626,6 +660,7 @@ class NqGatewayNeteven extends Module
 			$t_comment_lang[$language['id_lang']] = Gateway::getConfig('COMMENT_LANG_'.$language['id_lang']);
 
 		$this->context->smarty->assign(array (
+			'SHIPPING_COUNTRY_FRANCE' => Tools::safeOutput(Tools::getValue('SHIPPING_COUNTRY_FRANCE', Gateway::getConfig('SHIPPING_COUNTRY_FRANCE'))),
 			'SHIPPING_CARRIER_FRANCE' => Tools::safeOutput(Tools::getValue('SHIPPING_CARRIER_FRANCE', Gateway::getConfig('SHIPPING_CARRIER_FRANCE'))),
 			'SHIPPING_ZONE_FRANCE' => Tools::safeOutput(Tools::getValue('SHIPPING_ZONE_FRANCE', Gateway::getConfig('SHIPPING_ZONE_FRANCE'))),
 			'SHIPPING_CARRIER_INTERNATIONAL' => Tools::safeOutput(Tools::getValue('SHIPPING_CARRIER_INTERNATIONAL',

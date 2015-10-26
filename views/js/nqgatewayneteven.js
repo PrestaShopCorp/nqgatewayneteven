@@ -273,7 +273,7 @@ $(document).ready(function() {
 			return;
 		}
 
-		var default_val = SHIPPING_CARRIER_INTERNATIONAL;
+		var default_val = SHIPPING_ZONE_INTERNATIONAL;
 		$.ajax({
 			type: "POST",
 			url: moduleDir + "ajax/get-zone-by-carrier.php",
