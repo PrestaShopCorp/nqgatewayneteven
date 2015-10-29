@@ -544,7 +544,7 @@ class GatewayOrder extends Gateway
 				$carrier_tax_rate = 100;
 
 			$total_shipping_tax_excl = $carrier_tax_rate
-				? $neteven_order->OrderShippingCost->_ / ($carrier_tax_rate / 100) : $neteven_order->OrderShippingCost->_;
+				? $neteven_order->OrderShippingCost->_ / (($carrier_tax_rate / 100) + 1): $neteven_order->OrderShippingCost->_;
 
 			$total_wt = $total_product_wt + $neteven_order->OrderShippingCost->_;
 
@@ -574,8 +574,11 @@ class GatewayOrder extends Gateway
 			$order->date_add = $date_now;
 			$order->date_upd = $date_now;
 
+			/* @NewQuest SF : Fix pour éviter une erreur si pas de boutique activé. */
 			if (Configuration::get('PS_SHOP_ENABLE'))
-				$order->id_shop = (int)Configuration::get('PS_SHOP_DEFAULT');
+				$order_detail->id_shop = (int)Configuration::get('PS_SHOP_DEFAULT');
+			else
+				$order_detail->id_shop = 1;
 
 			if (!$order->add())
 				Toolbox::addLogLine(self::getL('Failed for order creation / NetEven Order Id').' '.(int)$neteven_order->OrderID);
