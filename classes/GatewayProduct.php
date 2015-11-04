@@ -193,6 +193,7 @@ class GatewayProduct extends Gateway
 			'.((self::$type_sku == 'reference') ? ',(SELECT pa2.`reference` FROM `'._DB_PREFIX_.'product_attribute` pa2
 				WHERE pa2.`id_product` = p.`id_product` AND `default_on` = 1 LIMIT 1) as declinaison_default_ref' : '').'
 		FROM `'._DB_PREFIX_.'product` p
+		JOIN `'._DB_PREFIX_.'product_shop` ps ON ps.id_product = p.id_product AND ps.id_shop = 1
 		LEFT JOIN `'._DB_PREFIX_.'product_lang` pl ON (pl.`id_product` = p.`id_product` AND pl.`id_lang` = '.(int)$id_lang.')
 		LEFT JOIN `'._DB_PREFIX_.'manufacturer` m ON (m.`id_manufacturer` = p.`id_manufacturer`)
 		LEFT JOIN `'._DB_PREFIX_.'category_lang` cl ON (cl.`id_category` = p.`id_category_default` AND cl.`id_lang` = '.(int)$id_lang.')
@@ -462,6 +463,10 @@ class GatewayProduct extends Gateway
 						$carrier_inter, $carrier_zone_inter);
 				elseif (!empty($shipping_price_inter))
 					$products_temp[$indice]['PriceShippingInt1'] = $shipping_price_inter;
+
+				/*if (!empty($carrier_france) && !empty($carrier_zone_france))
+					$products_temp[$indice]['PriceShippingInt1'] = $this->getShippingPrice($product['id_product'], $id_product_attribute,
+						$carrier_inter, $carrier_zone_inter);*/
 			}
 
 			/*
@@ -503,9 +508,7 @@ class GatewayProduct extends Gateway
 					$t_select[] = 'pl.`'.$row.'`';
 
 			$sql = 'SELECT
-				p.id_product, IFNULL(pa.id_product_attribute, 0) as id_product_attribute, pl.id_lang,
-				IFNULL(CONCAT(pl.name, " ", GROUP_CONCAT(DISTINCT al.name SEPARATOR " ")), pl.name) as name,
-				pl.description
+				p.id_product, IFNULL(pa.id_product_attribute, 0) as id_product_attribute, pl.id_lang, pl.name as name, pl.description
 				'.(!empty($t_select) ? ','.implode(',', $t_select) : '').'
 				FROM '._DB_PREFIX_.'product p
 				LEFT JOIN '._DB_PREFIX_.'product_attribute pa ON pa.id_product = p.id_product
@@ -525,10 +528,6 @@ class GatewayProduct extends Gateway
 				$lang_fields = array_merge(array('name', 'description'), $selected_product_lang_fields);
 				foreach ($results as $row)
 				{
-					/* @NewQuest SF : on met le nom du produit sans attribute comme nom de déclinaison. */
-					if ((int)$row['id_product_attribute'])
-						$row['name'] = $product['name'];
-
 					$index_lang = $translate_to_neteven[$row['id_lang']];
 					foreach ($lang_fields as $lang_field)
 						if (in_array($lang_field, $special_fields))
