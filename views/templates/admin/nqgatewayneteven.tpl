@@ -61,13 +61,13 @@
 	</ul>
 
 	<p class="neteven-description-title">{l s='Services d\'accompagnement à la distribution' mod='nqgatewayneteven'}</p>
-	<p>{l s='Appuyez vous sur les experts marketplaces de l\'équipe Neteven pour vendre plus et mieux ! Toutes les informations sur les services proposés par NetEven sont disponibles' mod='nqgatewayneteven'} <a href="http://www.neteven.com/offres-logiciel-service.html" target="_blank" style="text-decoration: underline;">{l s='ici' mod='nqgatewayneteven'}</a>.</p>
+	<p>{l s='Appuyez vous sur les experts marketplaces de l\'équipe Neteven pour vendre plus et mieux ! Toutes les informations sur les services proposés par NetEven sont disponibles' mod='nqgatewayneteven'} <a href="https://www.neteven.com/index.html" target="_blank" style="text-decoration: underline;">{l s='ici' mod='nqgatewayneteven'}</a>.</p>
 
 	<p class="neteven-description-title">{l s='Configuration du module' mod='nqgatewayneteven'}</p>
-	<p>{l s='Créez votre compte client' mod='nqgatewayneteven'} <a href="http://www.neteven.com/neteven-inscription.html" target="_blank" style="text-decoration: underline;">{l s='ici' mod='nqgatewayneteven'}</a> {l s='puis paramétrez le module en remplissant les formulaires ci-dessous.' mod='nqgatewayneteven'}</p>
+	<p>{l s='Créez votre compte client' mod='nqgatewayneteven'} <a href="https://www.neteven.com/inscription.html" target="_blank" style="text-decoration: underline;">{l s='ici' mod='nqgatewayneteven'}</a> {l s='puis paramétrez le module en remplissant les formulaires ci-dessous.' mod='nqgatewayneteven'}</p>
 
 	<p class="neteven-description-title">{l s='Documentation' mod='nqgatewayneteven'}</p>
-	<a href="/modules/nqgatewayneteven/Neteven_module_Prestashop.pdf" target="_blank">{l s='Voir la documentation' mod='nqgatewayneteven'}</a>
+	<a href="{$base_uri|escape:'htmlall':'UTF-8'}modules/nqgatewayneteven/Neteven_module_Prestashop.pdf" target="_blank">{l s='Voir la documentation' mod='nqgatewayneteven'}</a>
 </fieldset>
 
 {assign "default_select_value" "--"}

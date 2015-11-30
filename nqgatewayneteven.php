@@ -626,6 +626,7 @@ class NqGatewayNeteven extends Module
 			$t_comment_lang[$language['id_lang']] = Gateway::getConfig('COMMENT_LANG_'.$language['id_lang']);
 
 		$this->context->smarty->assign(array (
+			'base_uri' => __PS_BASE_URI__,
 			'SHIPPING_CARRIER_FRANCE' => Tools::safeOutput(Tools::getValue('SHIPPING_CARRIER_FRANCE', Gateway::getConfig('SHIPPING_CARRIER_FRANCE'))),
 			'SHIPPING_ZONE_FRANCE' => Tools::safeOutput(Tools::getValue('SHIPPING_ZONE_FRANCE', Gateway::getConfig('SHIPPING_ZONE_FRANCE'))),
 			'SHIPPING_CARRIER_INTERNATIONAL' => Tools::safeOutput(Tools::getValue('SHIPPING_CARRIER_INTERNATIONAL',
