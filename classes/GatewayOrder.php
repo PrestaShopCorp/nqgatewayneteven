@@ -447,15 +447,12 @@ class GatewayOrder extends Gateway
 
 			/* @NewQuest SF : check order locaction to choice correct carrier. */
 			$order_country = (int)$this->getCountryId($neteven_order->OrderID, $neteven_order->ShippingAddress, 'livraison');
-			if ((int)Gateway::getConfig('SHIPPING_COUNTRY_FRANCE') == $order_country) {
+			if ((int)Gateway::getConfig('SHIPPING_COUNTRY_FRANCE') == $order_country)
 				$id_carrier_use = (int)Gateway::getConfig('SHIPPING_CARRIER_FRANCE');
-			}
-			else {
+			else
 				$id_carrier_use = (int)Gateway::getConfig('SHIPPING_CARRIER_INTERNATIONAL');
-			}
-			if (!$id_carrier_use) {
+			if (!$id_carrier_use)
 				$id_carrier_use = (int)Gateway::getConfig('CARRIER_NETEVEN');
-			}
 
 
 			// Changement de la devise si besoin.
@@ -495,9 +492,8 @@ class GatewayOrder extends Gateway
 
 			/* @NewQuest SF : Création du nom de paiement. */
 			$payment_name = $this->getNetevenMarketplace($neteven_order->MarketPlaceId);
-			if (ToolsCore::strtolower(trim($neteven_order->PaymentMethod)) != 'unknown') {
+			if (ToolsCore::strtolower(trim($neteven_order->PaymentMethod)) != 'unknown')
 				$payment_name .= ' - '.$neteven_order->PaymentMethod;
-			}
 
 			/* Creating order */
 			$id_order_temp = 0;
@@ -576,9 +572,9 @@ class GatewayOrder extends Gateway
 
 			/* @NewQuest SF : Fix pour éviter une erreur si pas de boutique activé. */
 			if (Configuration::get('PS_SHOP_ENABLE'))
-				$order_detail->id_shop = (int)Configuration::get('PS_SHOP_DEFAULT');
+				$order->id_shop = (int)Configuration::get('PS_SHOP_DEFAULT');
 			else
-				$order_detail->id_shop = 1;
+				$order->id_shop = 1;
 
 			if (!$order->add())
 				Toolbox::addLogLine(self::getL('Failed for order creation / NetEven Order Id').' '.(int)$neteven_order->OrderID);
@@ -664,7 +660,8 @@ class GatewayOrder extends Gateway
 	private function updatePaymentMethod($id_order)
 	{
 		$o_order = new Order((int)$id_order);
-		if (Validate::isLoadedObject($o_order)) {
+		if (Validate::isLoadedObject($o_order))
+		{
 			$query = 'UPDATE '._DB_PREFIX_.'order_payment SET payment_method = "'.pSQL($o_order->payment).'" WHERE order_reference = "'.$o_order->reference.'"';
 			Db::getInstance()->execute($query);
 		}

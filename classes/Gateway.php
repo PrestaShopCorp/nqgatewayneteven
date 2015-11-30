@@ -260,7 +260,7 @@ class Gateway
 
 		$file_attachment = array();
 		$file_attachment['content'] = $message;
-		$file_attachment['name'] = 'neteven_query_'.str_replace(" ", "_", ToolsCore::replaceAccentedChars($subject)).'_'.date('Ymd_His').'.xml';
+		$file_attachment['name'] = 'neteven_query_'.str_replace(' ', '_', ToolsCore::replaceAccentedChars($subject)).'_'.date('Ymd_His').'.xml';
 		$file_attachment['mime'] = 'application/xml';
 		
 		foreach ($emails as $email)
@@ -274,13 +274,13 @@ class Gateway
 				{
 					$shop_email = Configuration::get('PS_SHOP_EMAIL');
 					MailCore::Send($id_lang, 'debug', $subject, array(
-						'{message}' => "Requête Neteven de type ".$subject
+						'{message}' => 'Requête Neteven de type '.$subject
 					), $email, null, $shop_email, $shop_name, $file_attachment, null, dirname(__FILE__).'/../mails/');
 				}
 				else
 				{
 					Mail::Send($id_lang, 'debug', $subject, array(
-						'{message}' => "Requête Neteven de type ".$subject
+						'{message}' => 'Requête Neteven de type '.$subject
 					), $email, null, $email, $shop_name, $file_attachment, null, dirname(__FILE__).'/../mails/');
 				}
 
@@ -681,9 +681,8 @@ class Gateway
 			38 => 'ZekidStore',
 		);
 
-		if (isset($translateMarketplace[$id_marketplace])) {
+		if (isset($translateMarketplace[$id_marketplace]))
 			return $translateMarketplace[$id_marketplace];
-		}
 
 		return 'Unknown';
 	}

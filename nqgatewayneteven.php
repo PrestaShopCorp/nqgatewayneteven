@@ -191,7 +191,8 @@ class NqGatewayNeteven extends Module
 
 	private function installHookByVersion()
 	{
-		if (!Gateway::getConfig('REGISTER_HOOK_3')) {
+		if (!Gateway::getConfig('REGISTER_HOOK_3'))
+		{
 			$this->registerHook('postUpdateOrderStatus');
 			Gateway::updateConfig('REGISTER_HOOK_3', 1);
 		}
@@ -339,13 +340,11 @@ class NqGatewayNeteven extends Module
 		if ((int)$params['id_carrier'] != (int)$params['carrier']->id)
 		{
 			// Mise à jours des id_carrier pour les frais de ports //
-			if (Gateway::getConfig('SHIPPING_CARRIER_FRANCE') == $params['id_carrier']) {
+			if (Gateway::getConfig('SHIPPING_CARRIER_FRANCE') == $params['id_carrier'])
 				Gateway::updateConfig('SHIPPING_CARRIER_FRANCE', (int)$params['carrier']->id);
-			}
 
-			if (Gateway::getConfig('SHIPPING_CARRIER_INTERNATIONAL') == $params['id_carrier']) {
+			if (Gateway::getConfig('SHIPPING_CARRIER_INTERNATIONAL') == $params['id_carrier'])
 				Gateway::updateConfig('SHIPPING_CARRIER_INTERNATIONAL', (int)$params['carrier']->id);
-			}
 
 			$id_carrier_neteven = Gateway::getConfig('CARRIER_NETEVEN');
 			if ($params['id_carrier'] != $id_carrier_neteven)
@@ -354,7 +353,6 @@ class NqGatewayNeteven extends Module
 			Gateway::updateConfig('CARRIER_NETEVEN', $params['carrier']->id);
 		}
 
-
 	}
 
 	public function hookPostUpdateOrderStatus($params)
@@ -362,20 +360,23 @@ class NqGatewayNeteven extends Module
 		if (!Db::getInstance()->getRow('SELECT * FROM `'._DB_PREFIX_.'orders_gateway` WHERE `id_order` = '.(int)$params['id_order']))
 			return;
 
-		if (!ValidateCore::isLoadedObject($params['newOrderStatus']) OR !$params['newOrderStatus']->paid)
+		if (!ValidateCore::isLoadedObject($params['newOrderStatus']) || !$params['newOrderStatus']->paid)
 			return;
 
 		// Update payment name on order_payment table.
 		$o_order = new Order((int)$params['id_order']);
-		if (Validate::isLoadedObject($o_order)) {
-			$query = 'UPDATE '._DB_PREFIX_.'order_payment SET payment_method = "'.pSQL($o_order->payment).'" WHERE order_reference = "'.$o_order->reference.'"';
+		if (Validate::isLoadedObject($o_order))
+		{
+			$query = 'UPDATE '._DB_PREFIX_.'order_payment SET payment_method = "'.pSQL($o_order->payment).
+					'" WHERE order_reference = "'.$o_order->reference.'"';
 			Db::getInstance()->execute($query);
 		}
 	}
 
 	public function hookUpdateOrderStatus($params)
 	{
-		if (!Db::getInstance()->getRow('SELECT * FROM `'._DB_PREFIX_.'orders_gateway` WHERE `id_order` = '.(int)$params['id_order']))
+		if (!Db::getInstance()->getRow('SELECT * FROM `'._DB_PREFIX_.'orders_gateway` WHERE `id_order` = '.
+				(int)$params['id_order']))
 			return;
 
 		// If SOAP is not installed

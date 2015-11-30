@@ -557,7 +557,7 @@
 		<label for="country_france">{l s='Pays local' mod='nqgatewayneteven'}</label>
 		<div class="margin-form">
 			<select name="SHIPPING_COUNTRY_FRANCE" id="country_france">
-				<option value="Autre" >{l s='Autre pays'}</option>
+				<option value="Autre" >{l s='Autre pays' mod='nqgatewayneteven'}</option>
 				{foreach from=$countries item=country}
 					<option value="{$country.id_country|intval}" {if $SHIPPING_COUNTRY_FRANCE == $country.id_country}selected="selected"{/if}>{$country.name|escape:'htmlall':'UTF-8'}</option>
 				{/foreach}
