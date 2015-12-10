@@ -626,7 +626,10 @@ class NqGatewayNeteven extends Module
 			foreach (explode('¤', Gateway::getConfig('CUSTOMIZABLE_FIELDS')) as $customizable_field)
 				$customizable_fields[] = explode('|', $customizable_field);
 
-		$carriers = Carrier::getCarriers((int)$this->context->cookie->id_lang, false, false, false, null, Carrier::ALL_CARRIERS);
+		if (version_compare(_PS_VERSION_, '1.5', '<'))
+			$carriers = Carrier::getCarriers((int)$this->context->cookie->id_lang, false, false, false, null, 5);
+		else
+			$carriers = Carrier::getCarriers((int)$this->context->cookie->id_lang, false, false, false, null, Carrier::ALL_CARRIERS);
 
 		$countries = CountryCore::getCountries((int)$this->context->cookie->id_lang);
 
@@ -659,6 +662,11 @@ class NqGatewayNeteven extends Module
 		$t_comment_lang = array ();
 		foreach ($languages as $language)
 			$t_comment_lang[$language['id_lang']] = Gateway::getConfig('COMMENT_LANG_'.$language['id_lang']);
+
+		if (version_compare(_PS_VERSION_, '1.5', '<'))
+			$using_ssl = Configuration::get('PS_SSL_ENABLED');
+		else
+			$using_ssl = Tools::usingSecureMode();
 
 		$this->context->smarty->assign(array (
 			'SHIPPING_COUNTRY_FRANCE' => Tools::safeOutput(Tools::getValue('SHIPPING_COUNTRY_FRANCE', Gateway::getConfig('SHIPPING_COUNTRY_FRANCE'))),
@@ -693,10 +701,10 @@ class NqGatewayNeteven extends Module
 			'NETEVEN_NS' => Tools::safeOutput(Tools::getValue('NETEVEN_NS', Gateway::getConfig('NETEVEN_NS'))),
 			//------------------------------
 			//- Cron URL
-			'cron_feature_url' => Tools::getProtocol(Tools::usingSecureMode()).$_SERVER['HTTP_HOST'].__PS_BASE_URI__.'modules/'.$this->name.$this->feature_url,
-			'cron_order_url' => Tools::getProtocol(Tools::usingSecureMode()).$_SERVER['HTTP_HOST'].__PS_BASE_URI__.'modules/'.$this->name.$this->order_url,
-			'cron_product_url' => Tools::getProtocol(Tools::usingSecureMode()).$_SERVER['HTTP_HOST'].__PS_BASE_URI__.'modules/'.$this->name.$this->product_url,
-			'cron_stock_url' => Tools::getProtocol(Tools::usingSecureMode()).$_SERVER['HTTP_HOST'].__PS_BASE_URI__.'modules/'.$this->name.$this->stock_url,
+			'cron_feature_url' => Tools::getProtocol($using_ssl).$_SERVER['HTTP_HOST'].__PS_BASE_URI__.'modules/'.$this->name.$this->feature_url,
+			'cron_order_url' => Tools::getProtocol($using_ssl).$_SERVER['HTTP_HOST'].__PS_BASE_URI__.'modules/'.$this->name.$this->order_url,
+			'cron_product_url' => Tools::getProtocol($using_ssl).$_SERVER['HTTP_HOST'].__PS_BASE_URI__.'modules/'.$this->name.$this->product_url,
+			'cron_stock_url' => Tools::getProtocol($using_ssl).$_SERVER['HTTP_HOST'].__PS_BASE_URI__.'modules/'.$this->name.$this->stock_url,
 			//------------------------------
 			//- Connexion compte
 			'NETEVEN_LOGIN' => Tools::safeOutput(Tools::getValue('NETEVEN_LOGIN', Gateway::getConfig('NETEVEN_LOGIN'))),
