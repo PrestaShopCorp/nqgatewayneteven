@@ -207,9 +207,6 @@ class GatewayProduct extends Gateway
 		AND ((p.`active` = 1 AND p.`available_for_order` = 1 ) OR ip.id_product IS NOT NULL)' : '').'
 		'.((is_array($products_exlusion) && count($products_exlusion) > 0) ? ' AND (p.`reference` NOT IN ('.implode(',', pSQL($products_exlusion)).')
 		AND pa.`reference` NOT IN ('.implode(',', pSQL($products_exlusion)).'))' : '');
-
-		if ($_SERVER['REMOTE_ADDR'] == '90.63.152.86' OR $_SERVER['REMOTE_ADDR'] == '83.153.164.96') {$sql .= ' AND p.id_product = 1 ';}
-
 		$sql .= '
 		GROUP BY p.`id_product`, pa.`id_product_attribute`
 		LIMIT '.($indice * 100).', 100

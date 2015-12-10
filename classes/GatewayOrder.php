@@ -854,12 +854,11 @@ class GatewayOrder extends Gateway
 						/* Update quantity of product */
 						if ($control_attribute_product)
 							StockAvailable::setQuantity($res_product['id_product'], $id_product_attribute,
-								StockAvailable::getQuantityAvailableByProduct($res_product['id_product'], $id_product_attribute) -
-								$neteven_order->Quantity);
+								StockAvailable::getQuantityAvailableByProduct(
+										$res_product['id_product'], $id_product_attribute) - $neteven_order->Quantity);
 						else
 							StockAvailable::setQuantity($res_product['id_product'], 0,
-								StockAvailable::getQuantityAvailableByProduct($res_product['id_product']) -
-								$neteven_order->Quantity);
+								StockAvailable::getQuantityAvailableByProduct($res_product['id_product']) - $neteven_order->Quantity);
 
 					}
 					else
