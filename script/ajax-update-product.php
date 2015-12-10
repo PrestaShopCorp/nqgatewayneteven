@@ -28,7 +28,7 @@ include(dirname(__FILE__).'/../../../config/config.inc.php');
 include(dirname(__FILE__).'/../../../init.php');
 include_once(dirname(__FILE__).'/../classes/Gateway.php');
 include_once(dirname(__FILE__).'/../nqgatewayneteven.php');
-@ini_set('max_execution_time', 3600);
+ini_set('max_execution_time', 3600);
 
 if (Tools::getValue('token') != Tools::encrypt(Configuration::get('PS_SHOP_NAME')))
 	die(Tools::displayError('Access denied'));

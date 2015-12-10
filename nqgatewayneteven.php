@@ -46,7 +46,7 @@ class NqGatewayNeteven extends Module
 
 		$this->tab = $tab_name;
 
-		$this->version = '3.0.5';
+		$this->version = '3.0.7';
 		$this->author = 'NetEven';
 
 		parent::__construct();
@@ -709,7 +709,7 @@ class NqGatewayNeteven extends Module
 			'SYNCHRO_PRODUCT_PARENT' => (int)Gateway::getConfig('SYNCHRO_PRODUCT_PARENT'),
 			'DEFAULT_BRAND' => Tools::safeOutput(Tools::getValue('DEFAULT_BRAND', Gateway::getConfig('DEFAULT_BRAND'))),
 			'IMAGE_TYPE_NAME' => Gateway::getConfig('IMAGE_TYPE_NAME'),
-			'TYPE_SKU' => (int)(Gateway::getConfig('TYPE_SKU') !== false) ? Gateway::getConfig('TYPE_SKU') : 'reference',
+			'TYPE_SKU' => Gateway::getConfig('TYPE_SKU') !== false ? Gateway::getConfig('TYPE_SKU') : 'reference',
 			'SYNCHRO_PRODUCT_MATCH' => $t_match_fields,
 			'SYNCHRO_PRODUCT_MATCH_COUNTRY' => $t_match_country_fields,
 			'countries' => $countries,

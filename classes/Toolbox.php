@@ -37,7 +37,7 @@ class Toolbox
 	public static function writeLog($is_error = false, $message = '')
 	{
 		if (!self::$handle_instance)
-			self::$handle_instance = @fopen(dirname(__FILE__).'/../logs/logs-'.date('Y-m-d').'.txt', 'a+');
+			self::$handle_instance = fopen(dirname(__FILE__).'/../logs/logs-'.date('Y-m-d').'.txt', 'a+');
 
 		if (!empty(self::$log) && !$is_error)
 		{

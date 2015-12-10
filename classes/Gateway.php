@@ -713,7 +713,7 @@ class Gateway
 
 		if (version_compare(_PS_VERSION_, '1.4', '>=') && version_compare(_PS_VERSION_, '1.5', '<'))
 		{
-			global $cookie;
+			$cookie = Context::getContext()->cookie;
 			$o_address = new Address($id_address);
 			$o_country = new Country($o_address->id_country);
 			$cookie->id_currency = $o_country->id_currency;
@@ -740,7 +740,7 @@ class Gateway
 
 		if (version_compare(_PS_VERSION_, '1.4', '>=') && version_compare(_PS_VERSION_, '1.5', '<'))
 		{
-			global $cookie;
+			$cookie = Context::getContext()->cookie;
 			$o_address = new Address($id_address);
 			$o_country = new Country($o_address->id_country);
 			$cookie->id_currency = $o_country->id_currency;

@@ -73,7 +73,7 @@ class GatewayOrder extends Gateway
 			Toolbox::manageError($e, 'get order ');
 			$neteven_orders = array();
 		}
-		
+
 		// load neteven order state and matching config with Prestashop orders state.
 		$this->neteven_order_status = Gateway::getNetevenState(true);
 
@@ -454,7 +454,6 @@ class GatewayOrder extends Gateway
 			if (!$id_carrier_use)
 				$id_carrier_use = (int)Gateway::getConfig('CARRIER_NETEVEN');
 
-
 			// Changement de la devise si besoin.
 			$id_currency = (int)Configuration::get('PS_CURRENCY_DEFAULT');
 			if (isset($neteven_order->AmountPaid) && isset($neteven_order->AmountPaid->currency_id))
@@ -662,7 +661,8 @@ class GatewayOrder extends Gateway
 		$o_order = new Order((int)$id_order);
 		if (Validate::isLoadedObject($o_order))
 		{
-			$query = 'UPDATE '._DB_PREFIX_.'order_payment SET payment_method = "'.pSQL($o_order->payment).'" WHERE order_reference = "'.$o_order->reference.'"';
+			$query = 'UPDATE '._DB_PREFIX_.'order_payment SET payment_method = "'.pSQL($o_order->payment)
+					.'" WHERE order_reference = "'.$o_order->reference.'"';
 			Db::getInstance()->execute($query);
 		}
 		unset($o_order);
@@ -1126,11 +1126,13 @@ class GatewayOrder extends Gateway
 				switch ($status)
 				{
 					case 'Shipped':
-						$res_order = Db::getInstance()->getRow('SELECT `shipping_number` FROM `'._DB_PREFIX_.'orders` WHERE `id_order` = '.(int)$params['id_order']);
+						$res_order = Db::getInstance()->getRow('SELECT `shipping_number` FROM `'._DB_PREFIX_.
+								'orders` WHERE `id_order` = '.(int)$params['id_order']);
 						$track = $res_order['shipping_number'];
 						break;
 					case 'Refunded':
-						$amounttorefund = Db::getInstance()->getValue('SELECT `total_paid_real` FROM `'._DB_PREFIX_.'orders` WHERE `id_order` = '.(int)$params['id_order']);
+						$amounttorefund = Db::getInstance()->getValue('SELECT `total_paid_real` FROM `'._DB_PREFIX_.
+								'orders` WHERE `id_order` = '.(int)$params['id_order']);
 						break;
 				}
 			}
