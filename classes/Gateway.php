@@ -258,6 +258,11 @@ class Gateway
 		if (!$emails)
 			return;
 
+		$file_attachment = array();
+		$file_attachment['content'] = $message;
+		$file_attachment['name'] = 'neteven_query_'.str_replace(' ', '_', ToolsCore::replaceAccentedChars($subject)).'_'.date('Ymd_His').'.xml';
+		$file_attachment['mime'] = 'application/xml';
+		
 		foreach ($emails as $email)
 		{
 			if (Validate::isEmail($email))
@@ -268,15 +273,15 @@ class Gateway
 				if (!$classic_mail)
 				{
 					$shop_email = Configuration::get('PS_SHOP_EMAIL');
-					Mail::Send($id_lang, 'debug', $subject, array(
-						'{message}' => $message
-					), $email, null, $shop_email, $shop_name, null, null, dirname(__FILE__).'/../mails/');
+					MailCore::Send($id_lang, 'debug', $subject, array(
+						'{message}' => 'Requête Neteven de type '.$subject
+					), $email, null, $shop_email, $shop_name, $file_attachment, null, dirname(__FILE__).'/../mails/');
 				}
 				else
 				{
 					Mail::Send($id_lang, 'debug', $subject, array(
-						'{message}' => $message
-					), $email, null, $email, $shop_name, null, null, dirname(__FILE__).'/../mails/');
+						'{message}' => 'Requête Neteven de type '.$subject
+					), $email, null, $email, $shop_name, $file_attachment, null, dirname(__FILE__).'/../mails/');
 				}
 
 				if ($this->getValue('debug'))
@@ -587,7 +592,7 @@ class Gateway
 				'index' => 'toConfirm',
 				'name' => 'toConfirm',
 				'can_use' => 1,
-				'accepted' => 1,
+				'accepted' => 0,
 				'in_total_price' => 1,
 			),
 		);
@@ -599,6 +604,88 @@ class Gateway
 		return $neteven_state;
 	}
 
+
+	public function getNetevenMarketplace($id_marketplace)
+	{
+		$translateMarketplace = array(
+			14 => '2x Moins Cher',
+			9 => 'AbeBooks',
+			6 => 'Alapage',
+			20 => 'Amazon Allemagne',
+			22 => 'Amazon Angleterre',
+			7 => 'Amazon France',
+			30 => 'Amazon Italy',
+			2 => 'Amazon Marketplace',
+			29 => 'Amazon Spain',
+			58 => 'Amazon USA',
+			36 => 'Atosho',
+			63 => 'Back Market',
+			67 => 'Boulanger',
+			3 => 'Boutique eBay',
+			26 => 'BrandAlley',
+			62 => 'Carrefour OnLine',
+			25 => 'cdiscount',
+			13 => 'Clicanddeal',
+			68 => 'Darty',
+			18 => 'eBay Allemagne',
+			39 => 'eBay Australia',
+			54 => 'eBay Belgique FR',
+			40 => 'eBay Canada',
+			42 => 'eBay Canada Français',
+			4 => 'eBay France',
+			32 => 'eBay Italy',
+			31 => 'eBay Spain',
+			23 => 'eBay UK',
+			41 => 'eBay USA',
+			15 => 'Fnac',
+			45 => 'Fnac Espagne',
+			49 => 'Galeries Lafayette',
+			17 => 'Games',
+			33 => 'Groupon FR',
+			60 => 'Ichiba',
+			24 => 'La Redoute',
+			72 => 'Lazada Malaisie',
+			66 => 'Menlook',
+			44 => 'Mister Good Deal',
+			51 => 'MyMarketplace',
+			69 => 'Oclio',
+			34 => 'one world avenue',
+			46 => 'Otto',
+			11 => 'Oxatis',
+			12 => 'Pixmania',
+			35 => 'Play',
+			28 => 'Prestashop',
+			5 => 'PriceMinister',
+			52 => 'Privalia',
+			16 => 'Rue du commerce',
+			19 => 'Sandbox',
+			59 => 'Sandboxv2',
+			1000 => 'Scopeo',
+			27 => 'SFR',
+			55 => 'Spartoo Allemagne',
+			57 => 'Spartoo Angleterre',
+			56 => 'Spartoo France',
+			43 => 'Spartoo Italie',
+			53 => 'Tesco',
+			73 => 'TMALL Global',
+			10 => 'Top Annonces',
+			21 => 'Vente du Diable',
+			1002 => 'Villatech',
+			1001 => 'Villatech',
+			64 => 'Wehkamp',
+			47 => 'Zalando Allemagne',
+			61 => 'Zalando Angleterre',
+			37 => 'Zalando France',
+			48 => 'Zalando Italie',
+			50 => 'Zalando Pays-Bas',
+			38 => 'ZekidStore',
+		);
+
+		if (isset($translateMarketplace[$id_marketplace]))
+			return $translateMarketplace[$id_marketplace];
+
+		return 'Unknown';
+	}
 
 	/**
 	 * Méthodes de callback.
@@ -626,7 +713,7 @@ class Gateway
 
 		if (version_compare(_PS_VERSION_, '1.4', '>=') && version_compare(_PS_VERSION_, '1.5', '<'))
 		{
-			global $cookie;
+			$cookie = Context::getContext()->cookie;
 			$o_address = new Address($id_address);
 			$o_country = new Country($o_address->id_country);
 			$cookie->id_currency = $o_country->id_currency;
@@ -653,7 +740,7 @@ class Gateway
 
 		if (version_compare(_PS_VERSION_, '1.4', '>=') && version_compare(_PS_VERSION_, '1.5', '<'))
 		{
-			global $cookie;
+			$cookie = Context::getContext()->cookie;
 			$o_address = new Address($id_address);
 			$o_country = new Country($o_address->id_country);
 			$cookie->id_currency = $o_country->id_currency;

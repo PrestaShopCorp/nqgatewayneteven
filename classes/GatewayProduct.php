@@ -193,6 +193,7 @@ class GatewayProduct extends Gateway
 			'.((self::$type_sku == 'reference') ? ',(SELECT pa2.`reference` FROM `'._DB_PREFIX_.'product_attribute` pa2
 				WHERE pa2.`id_product` = p.`id_product` AND `default_on` = 1 LIMIT 1) as declinaison_default_ref' : '').'
 		FROM `'._DB_PREFIX_.'product` p
+		JOIN `'._DB_PREFIX_.'product_shop` ps ON ps.id_product = p.id_product AND ps.id_shop = 1
 		LEFT JOIN `'._DB_PREFIX_.'product_lang` pl ON (pl.`id_product` = p.`id_product` AND pl.`id_lang` = '.(int)$id_lang.')
 		LEFT JOIN `'._DB_PREFIX_.'manufacturer` m ON (m.`id_manufacturer` = p.`id_manufacturer`)
 		LEFT JOIN `'._DB_PREFIX_.'category_lang` cl ON (cl.`id_category` = p.`id_category_default` AND cl.`id_lang` = '.(int)$id_lang.')
@@ -206,7 +207,6 @@ class GatewayProduct extends Gateway
 		AND ((p.`active` = 1 AND p.`available_for_order` = 1 ) OR ip.id_product IS NOT NULL)' : '').'
 		'.((is_array($products_exlusion) && count($products_exlusion) > 0) ? ' AND (p.`reference` NOT IN ('.implode(',', pSQL($products_exlusion)).')
 		AND pa.`reference` NOT IN ('.implode(',', pSQL($products_exlusion)).'))' : '');
-
 		$sql .= '
 		GROUP BY p.`id_product`, pa.`id_product_attribute`
 		LIMIT '.($indice * 100).', 100
@@ -437,7 +437,7 @@ class GatewayProduct extends Gateway
 			 */
 			if (self::$active_shipping)
 			{
-				$products_temp[$indice]['shipping_delay'] = $this->getValue('shipping_delay');
+				$products_temp[$indice]['ShippingDelay'] = $this->getValue('shipping_delay');
 				$products_temp[$indice]['Comment'] = $this->getValue('comment');
 
 				$shipping_price_local = $this->getValue('shipping_price_local');
@@ -457,15 +457,15 @@ class GatewayProduct extends Gateway
 				$carrier_inter = $this->getConfig('SHIPPING_CARRIER_INTERNATIONAL');
 				$carrier_zone_inter = $this->getConfig('SHIPPING_ZONE_INTERNATIONAL');
 
-				if (!empty($carrier_france) && !empty($carrier_zone_france))
+				if (!empty($carrier_inter) && !empty($carrier_zone_inter))
 					$products_temp[$indice]['PriceShippingInt1'] = $this->getShippingPrice($product['id_product'], $id_product_attribute,
 						$carrier_inter, $carrier_zone_inter);
 				elseif (!empty($shipping_price_inter))
 					$products_temp[$indice]['PriceShippingInt1'] = $shipping_price_inter;
 
-				if (!empty($carrier_france) && !empty($carrier_zone_france))
+				/*if (!empty($carrier_france) && !empty($carrier_zone_france))
 					$products_temp[$indice]['PriceShippingInt1'] = $this->getShippingPrice($product['id_product'], $id_product_attribute,
-						$carrier_inter, $carrier_zone_inter);
+						$carrier_inter, $carrier_zone_inter);*/
 			}
 
 			/*
@@ -507,9 +507,7 @@ class GatewayProduct extends Gateway
 					$t_select[] = 'pl.`'.$row.'`';
 
 			$sql = 'SELECT
-				p.id_product, IFNULL(pa.id_product_attribute, 0) as id_product_attribute, pl.id_lang,
-				IFNULL(CONCAT(pl.name, " ", GROUP_CONCAT(DISTINCT al.name SEPARATOR " ")), pl.name) as name,
-				pl.description
+				p.id_product, IFNULL(pa.id_product_attribute, 0) as id_product_attribute, pl.id_lang, pl.name as name, pl.description
 				'.(!empty($t_select) ? ','.implode(',', $t_select) : '').'
 				FROM '._DB_PREFIX_.'product p
 				LEFT JOIN '._DB_PREFIX_.'product_attribute pa ON pa.id_product = p.id_product
@@ -529,10 +527,6 @@ class GatewayProduct extends Gateway
 				$lang_fields = array_merge(array('name', 'description'), $selected_product_lang_fields);
 				foreach ($results as $row)
 				{
-					/* @NewQuest SF : on met le nom du produit sans attribute comme nom de déclinaison. */
-					if ((int)$row['id_product_attribute'])
-						$row['name'] = $product['name'];
-
 					$index_lang = $translate_to_neteven[$row['id_lang']];
 					foreach ($lang_fields as $lang_field)
 						if (in_array($lang_field, $special_fields))
@@ -670,7 +664,6 @@ class GatewayProduct extends Gateway
 
 					}
 			}
-
 		}
 
 		if ($display == true)

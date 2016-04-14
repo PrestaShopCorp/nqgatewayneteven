@@ -35,7 +35,11 @@ $action = Tools::getValue('action');
 $field = Tools::getValue('field');
 $id = Tools::getValue('id');
 $order_states = explode(':', Gateway::getConfig($field));
-global $cookie;
+
+if (version_compare(_PS_VERSION_, '1.5', '<'))
+	require(_PS_MODULE_DIR_.'nqgatewayneteven/backward_compatibility/backward.php');
+
+$id_lang = Context::getContext()->language->id;
 
 if (empty($order_states[0]))
 	$order_states = array();
@@ -105,7 +109,7 @@ if (count($order_states) > 0)
 	{
 		$state_infos = Db::getInstance()->getRow('SELECT `id_order_state`, `name` 
 			FROM `'._DB_PREFIX_.'order_state_lang`
-			WHERE `id_lang` = '.(int)$cookie->id_lang.'
+			WHERE `id_lang` = '.(int)$id_lang.'
 			AND `id_order_state` = '.(int)$state.'
 		');
 

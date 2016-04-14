@@ -363,6 +363,8 @@ class GatewayOrder extends Gateway
 				$this->addStatusOnOrder($id_order_temp, $neteven_order);
 		}
 
+		$this->updatePaymentMethod($id_order_temp);
+
 		if ($this->time_analyse)
 		{
 			$this->current_time_2 = time();
@@ -442,6 +444,16 @@ class GatewayOrder extends Gateway
 		if (!$res = Db::getInstance()->getRow('SELECT * FROM `'._DB_PREFIX_.'orders_gateway`
 		WHERE `id_order_neteven` = '.(int)$neteven_order->OrderID.' AND `id_order_detail_neteven` = 0'))
 		{
+
+			/* @NewQuest SF : check order locaction to choice correct carrier. */
+			$order_country = (int)$this->getCountryId($neteven_order->OrderID, $neteven_order->ShippingAddress, 'livraison');
+			if ((int)Gateway::getConfig('SHIPPING_COUNTRY_FRANCE') == $order_country)
+				$id_carrier_use = (int)Gateway::getConfig('SHIPPING_CARRIER_FRANCE');
+			else
+				$id_carrier_use = (int)Gateway::getConfig('SHIPPING_CARRIER_INTERNATIONAL');
+			if (!$id_carrier_use)
+				$id_carrier_use = (int)Gateway::getConfig('CARRIER_NETEVEN');
+
 			// Changement de la devise si besoin.
 			$id_currency = (int)Configuration::get('PS_CURRENCY_DEFAULT');
 			if (isset($neteven_order->AmountPaid) && isset($neteven_order->AmountPaid->currency_id))
@@ -460,7 +472,7 @@ class GatewayOrder extends Gateway
 			$cart->id_currency = $id_currency;
 			$cart->id_customer = (int)$id_customer;
 			$cart->id_lang = (int)Configuration::get('PS_LANG_DEFAULT');
-			$cart->id_carrier = Gateway::getConfig('CARRIER_NETEVEN');
+			$cart->id_carrier = $id_carrier_use;
 			$cart->recyclable = 1;
 			$cart->gift = 0;
 			$cart->gift_message = '';
@@ -477,10 +489,15 @@ class GatewayOrder extends Gateway
 				Toolbox::displayDebugMessage(self::getL('Cart').' : '.((int)$this->current_time_0 - (int)$this->current_time_2).'s');
 			}
 
+			/* @NewQuest SF : Création du nom de paiement. */
+			$payment_name = $this->getNetevenMarketplace($neteven_order->MarketPlaceId);
+			if (ToolsCore::strtolower(trim($neteven_order->PaymentMethod)) != 'unknown')
+				$payment_name .= ' - '.$neteven_order->PaymentMethod;
+
 			/* Creating order */
 			$id_order_temp = 0;
 			$order = new Order();
-			$order->id_carrier = Gateway::getConfig('CARRIER_NETEVEN');
+			$order->id_carrier = $id_carrier_use;
 			$order->id_lang = Configuration::get('PS_LANG_DEFAULT');
 			$order->id_customer = $id_customer;
 			$order->id_cart = $cart->id;
@@ -488,7 +505,7 @@ class GatewayOrder extends Gateway
 			$order->id_address_delivery = $id_address_shipping;
 			$order->id_address_invoice = $id_address_billing;
 			$order->secure_key = $secure_key_default;
-			$order->payment = $neteven_order->PaymentMethod;
+			$order->payment = $payment_name;
 			$order->conversion_rate = 1;
 			$order->module = 'nqgatewayneteven';
 			$order->recyclable = 0;
@@ -522,7 +539,7 @@ class GatewayOrder extends Gateway
 				$carrier_tax_rate = 100;
 
 			$total_shipping_tax_excl = $carrier_tax_rate
-				? $neteven_order->OrderShippingCost->_ / ($carrier_tax_rate / 100) : $neteven_order->OrderShippingCost->_;
+				? $neteven_order->OrderShippingCost->_ / (($carrier_tax_rate / 100) + 1): $neteven_order->OrderShippingCost->_;
 
 			$total_wt = $total_product_wt + $neteven_order->OrderShippingCost->_;
 
@@ -552,8 +569,11 @@ class GatewayOrder extends Gateway
 			$order->date_add = $date_now;
 			$order->date_upd = $date_now;
 
+			/* @NewQuest SF : Fix pour éviter une erreur si pas de boutique activé. */
 			if (Configuration::get('PS_SHOP_ENABLE'))
 				$order->id_shop = (int)Configuration::get('PS_SHOP_DEFAULT');
+			else
+				$order->id_shop = 1;
 
 			if (!$order->add())
 				Toolbox::addLogLine(self::getL('Failed for order creation / NetEven Order Id').' '.(int)$neteven_order->OrderID);
@@ -563,7 +583,7 @@ class GatewayOrder extends Gateway
 
 				Db::getInstance()->Execute('INSERT INTO `'._DB_PREFIX_.'order_carrier` (`id_order`, `id_carrier`, `id_order_invoice`, `weight`,
 				`shipping_cost_tax_excl`, `shipping_cost_tax_incl`, `tracking_number`, `date_add`)
-				VALUES ('.(int)$id_order_temp.', '.(int)Gateway::getConfig('CARRIER_NETEVEN').', 0, 0, 0, 0, 0,"'.pSQL(date('Y-m-d H:i:s')).'")');
+				VALUES ('.(int)$id_order_temp.', '.(int)$id_carrier_use.', 0, 0, 0, 0, 0,"'.pSQL(date('Y-m-d H:i:s')).'")');
 
 				Db::getInstance()->Execute('INSERT INTO `'._DB_PREFIX_.'message` (`id_order`, `message`, `date_add`)
 				VALUES ('.(int)$id_order_temp.', "Place de marché '.$neteven_order->MarketPlaceName.'", "'.pSQL(date('Y-m-d H:i:s')).'")');
@@ -631,6 +651,21 @@ class GatewayOrder extends Gateway
 				/* @NewQuest SF : Pour empêcher d'avoir 2 statut avec un date_add identique. */
 				sleep(2);
 			}
+	}
+
+	/**
+	 * @param $order
+	 */
+	private function updatePaymentMethod($id_order)
+	{
+		$o_order = new Order((int)$id_order);
+		if (Validate::isLoadedObject($o_order))
+		{
+			$query = 'UPDATE '._DB_PREFIX_.'order_payment SET payment_method = "'.pSQL($o_order->payment)
+					.'" WHERE order_reference = "'.$o_order->reference.'"';
+			Db::getInstance()->execute($query);
+		}
+		unset($o_order);
 	}
 
 	/**
@@ -819,12 +854,11 @@ class GatewayOrder extends Gateway
 						/* Update quantity of product */
 						if ($control_attribute_product)
 							StockAvailable::setQuantity($res_product['id_product'], $id_product_attribute,
-								StockAvailable::getQuantityAvailableByProduct($res_product['id_product'], $id_product_attribute) -
-								$neteven_order->Quantity);
+								StockAvailable::getQuantityAvailableByProduct(
+										$res_product['id_product'], $id_product_attribute) - $neteven_order->Quantity);
 						else
 							StockAvailable::setQuantity($res_product['id_product'], 0,
-								StockAvailable::getQuantityAvailableByProduct($res_product['id_product']) -
-								$neteven_order->Quantity);
+								StockAvailable::getQuantityAvailableByProduct($res_product['id_product']) - $neteven_order->Quantity);
 
 					}
 					else
@@ -941,16 +975,7 @@ class GatewayOrder extends Gateway
 		return (int)$client['id_customer'];
 	}
 
-	/**
-	 * Add addresses
-	 *
-	 * @param $order_id
-	 * @param $order_infos
-	 * @param $type
-	 * @param $id_customer
-	 * @return mixed
-	 */
-	private function addAddresseInBDD($order_id, $neteven_address, $type, $id_customer)
+	private function getCountryId($order_id, $neteven_address, $type)
 	{
 		$id_country = $this->getValue('id_country_default');
 		if (!$id_country = Country::getIdByName(2, $neteven_address->Country))
@@ -987,6 +1012,23 @@ class GatewayOrder extends Gateway
 					break;
 				}
 		}
+
+		return $id_country;
+	}
+
+
+	/**
+	 * Add addresses
+	 *
+	 * @param $order_id
+	 * @param $neteven_address
+	 * @param $type
+	 * @param $id_customer
+	 * @return mixed
+	 */
+	private function addAddresseInBDD($order_id, $neteven_address, $type, $id_customer)
+	{
+		$id_country = $this->getCountryId($order_id, $neteven_address, $type);
 
 		if (!(int)$id_country)
 		{
@@ -1083,11 +1125,13 @@ class GatewayOrder extends Gateway
 				switch ($status)
 				{
 					case 'Shipped':
-						$res_order = Db::getInstance()->getRow('SELECT `shipping_number` FROM `'._DB_PREFIX_.'orders` WHERE `id_order` = '.(int)$params['id_order']);
+						$res_order = Db::getInstance()->getRow('SELECT `shipping_number` FROM `'._DB_PREFIX_.
+								'orders` WHERE `id_order` = '.(int)$params['id_order']);
 						$track = $res_order['shipping_number'];
 						break;
 					case 'Refunded':
-						$amounttorefund = Db::getInstance()->getValue('SELECT `total_paid_real` FROM `'._DB_PREFIX_.'orders` WHERE `id_order` = '.(int)$params['id_order']);
+						$amounttorefund = Db::getInstance()->getValue('SELECT `total_paid_real` FROM `'._DB_PREFIX_.
+								'orders` WHERE `id_order` = '.(int)$params['id_order']);
 						break;
 				}
 			}

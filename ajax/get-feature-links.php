@@ -34,7 +34,11 @@ if (Tools::getValue('token') != Tools::encrypt(Configuration::get('PS_SHOP_NAME'
 $action = Tools::getValue('action');
 $id = Tools::getValue('id');
 $id_order_gateway_feature = Tools::getValue('id_order_gateway_feature');
-global $cookie;
+
+if (version_compare(_PS_VERSION_, '1.5', '<'))
+	require(_PS_MODULE_DIR_.'nqgatewayneteven/backward_compatibility/backward.php');
+
+$id_lang = Context::getContext()->language->id;
 
 if ($action != 'display')
 	$data = array('id' => Tools::substr($id, 1), 'type' => Tools::substr($id, 0, 1));
@@ -65,9 +69,9 @@ $feature_links = Db::getInstance()->ExecuteS('
 		SELECT ogfl.*, agl.`name` as attribute_name, fl.`name` as feature_name, ogf.`name`
 		FROM `'._DB_PREFIX_.'orders_gateway_feature_link` ogfl
 		LEFT JOIN `'._DB_PREFIX_.'attribute_group_lang` agl
-		    ON (agl.`id_attribute_group` = ogfl.`id_attribute_group` AND agl.`id_lang` = '.(int)$cookie->id_lang.')
+		    ON (agl.`id_attribute_group` = ogfl.`id_attribute_group` AND agl.`id_lang` = '.(int)$id_lang.')
 		LEFT JOIN `'._DB_PREFIX_.'feature_lang` fl
-		    ON (fl.`id_feature` = ogfl.`id_feature` AND fl.`id_lang` = '.(int)$cookie->id_lang.')
+		    ON (fl.`id_feature` = ogfl.`id_feature` AND fl.`id_lang` = '.(int)$id_lang.')
 		LEFT JOIN `'._DB_PREFIX_.'orders_gateway_feature` ogf
 		    ON (ogf.`id_order_gateway_feature` = ogfl.`id_order_gateway_feature`)');
 
