@@ -281,7 +281,7 @@ class Gateway
 				{
 					Mail::Send($id_lang, 'debug', $subject, array(
 						'{message}' => 'Requête Neteven de type '.$subject
-					), $email, null, $email, $shop_name, $file_attachment, null, dirname(__FILE__).'/../mails/');
+					), $email, null, $shop_email, $shop_name, $file_attachment, null, dirname(__FILE__).'/../mails/');
 				}
 
 				if ($this->getValue('debug'))
