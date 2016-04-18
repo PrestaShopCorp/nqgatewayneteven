@@ -196,8 +196,21 @@ class GatewayOrder extends Gateway
 			$address->address2 = Toolbox::stringWithNumericFilter($shipping_address->Address2);
 			$address->postcode = Toolbox::numericFilter($shipping_address->PostalCode);
 			$address->city = (!empty($shipping_address->CityName)) ? Toolbox::stringFilter($shipping_address->CityName) : ' ';
+
+            // fix required phone field //
 			$address->phone = Tools::substr(Toolbox::numericFilter($shipping_address->Phone), 0, 16);
+			if (empty($address->phone)) {
+				$address->phone = '0400000000';
+			}
 			$address->phone_mobile = Tools::substr(Toolbox::numericFilter($shipping_address->Mobile), 0, 16);
+			if (empty($address->phone_mobile)) {
+				if (!empty($address->phone)) {
+					$address->phone_mobile = $address->phone;
+				} else {
+					$address->phone_mobile = '0600000000';
+				}
+			}
+
 			$address->id_country = $id_country;
 			$address->date_upd = $date_now;
 
@@ -217,8 +230,21 @@ class GatewayOrder extends Gateway
 			$address->address2 = Toolbox::stringWithNumericFilter($billing_address->Address2);
 			$address->postcode = Toolbox::numericFilter($billing_address->PostalCode);
 			$address->city = (!empty($billing_address->CityName)) ? Toolbox::stringFilter($billing_address->CityName) : ' ';
-			$address->phone = Tools::substr(Toolbox::numericFilter($billing_address->Phone), 0, 16);
+
+            // fix required phone field //
+            $address->phone = Tools::substr(Toolbox::numericFilter($billing_address->Phone), 0, 16);
+			if (empty($address->phone)) {
+				$address->phone = '0400000000';
+			}
 			$address->phone_mobile = Tools::substr(Toolbox::numericFilter($billing_address->Mobile), 0, 16);
+			if (empty($address->phone_mobile)) {
+				if (!empty($address->phone)) {
+					$address->phone_mobile = $address->phone;
+				} else {
+					$address->phone_mobile = '0600000000';
+				}
+			}
+
 			$address->id_country = $id_country;
 			$address->date_upd = $date_now;
 
@@ -1067,8 +1093,21 @@ class GatewayOrder extends Gateway
 			$new_address->address2 = Toolbox::stringWithNumericFilter($neteven_address->Address2);
 			$new_address->postcode = Toolbox::numericFilter($neteven_address->PostalCode);
 			$new_address->city = (!empty($neteven_address->CityName)) ? Toolbox::stringFilter($neteven_address->CityName) : ' ';
-			$new_address->phone = Tools::substr(Toolbox::numericFilter($neteven_address->Phone), 0, 16);
-			$new_address->phone_mobile = Tools::substr(Toolbox::numericFilter($neteven_address->Mobile), 0, 16);
+
+            // fix required phone field //
+            $new_address->phone = Tools::substr(Toolbox::numericFilter($neteven_address->Phone), 0, 16);
+			if (empty($new_address->phone)) {
+				$new_address->phone = '0400000000';
+			}
+            $new_address->phone_mobile = Tools::substr(Toolbox::numericFilter($neteven_address->Mobile), 0, 16);
+            if (empty($new_address->phone_mobile)) {
+                if (!empty($new_address->phone)) {
+                    $new_address->phone_mobile = $new_address->phone;
+                } else {
+                    $new_address->phone_mobile = '0600000000';
+                }
+            }
+
 			$new_address->id_country = $id_country;
 			$new_address->id_customer = $id_customer;
 			$new_address->date_add = $date_now;
